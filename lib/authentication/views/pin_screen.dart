@@ -1,8 +1,9 @@
+import 'dart:ui';
+
 import 'package:custom_pin_screen/custom_pin_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:logger/logger.dart';
 
 import '../widgets/Pin_code_field.dart';
@@ -39,6 +40,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
 
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -55,6 +57,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
             ),
             const SizedBox(height: 20),
             CustomKeyBoard(
+
               pinTheme: pinTheme,
               onChanged: (v) {
                 if (kDebugMode) {
@@ -67,7 +70,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
               },
               specialKey:const  Icon(
                 Icons.check_circle_rounded,
-                key: const Key('login'),
+                key: Key('login'),
                 color: Colors.green,
                 size: 50,
               ),
@@ -83,7 +86,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                     colorText: Colors.white,
                     margin: const EdgeInsets.all(10),
                     shouldIconPulse: true,
-                    icon: Icon(Icons.info_outline),
+                    icon: const Icon(Icons.info_outline),
                   );
               },
               maxLength: 4,

@@ -1,4 +1,6 @@
-class User {
+import 'package:equatable/equatable.dart';
+
+class User extends Equatable {
   int id;
   String name;
   int role;
@@ -12,5 +14,8 @@ class User {
     required this.code,
     required this.phone,
   });
+
+  @override
+  List<Object?> get props => throw UnimplementedError();
 }
 
