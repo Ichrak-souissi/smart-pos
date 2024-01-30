@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:logger/logger.dart';
+import 'package:pos/authentication/controllers/pin_controller.dart';
 
 import '../widgets/Pin_code_field.dart';
 
@@ -24,8 +25,14 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
 
   @override
   Widget build(BuildContext context) {
+
+    final PinController controller = Get.put(PinController());
+
+
     return Scaffold(
       appBar: AppBar(
+         elevation: 5,
+
         title: const  Text(
           "Binevenue",
           style: TextStyle(
@@ -39,8 +46,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-
-
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -75,19 +81,10 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
                 size: 50,
               ),
               specialKeyOnTap: () {
-                  Logger().i(pin) ;
-                  Get.snackbar(
-                    'login successfully',
-                    '',
-                    snackPosition: SnackPosition.TOP,
-                    duration: const Duration(seconds: 1),
-                    animationDuration: const Duration(milliseconds: 400),
-                    backgroundColor: Colors.blue,
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(10),
-                    shouldIconPulse: true,
-                    icon: const Icon(Icons.info_outline),
-                  );
+                controller.sendPin(pin) ;
+
+
+
               },
               maxLength: 4,
             ),

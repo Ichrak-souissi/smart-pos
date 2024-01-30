@@ -1,20 +1,54 @@
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:logger/logger.dart';
+import 'package:pos/authentication/controllers/secure_storage.dart';
 
+import '../../main.dart';
 import '../models/user.dart';
 
-class UserController extends GetxController {
+import 'package:dio/dio.dart';
 
+class PinController extends GetxController {
+  final Dio _dio = Dio();
+  final String _pinUrl = 'http://127.0.0.1:3000/users/login';
+  late final User user  ;
 
-    Rx<User> user = User(id: 0, name: '', role: 0, code: 0, phone: 0).obs;
-
-  void updateUser(User newUser) {
-  user.value = newUser;
+  void onLoginSuccess() {
+    AuthController().isLoggedIn = true;
+    GetStorage().write('isLoggedIn', true);
+    Get.off(HomeScreen());
   }
+  Future<void> sendPin(String pin) async {
+    try {
+      final response = await _dio.post(
+        _pinUrl,
+        data: {'code': pin},
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
 
-  // Add other methods as needed, such as methods for fetching user data from an API
-
-void login ( int pin) {
-
-}
-
+      // Handle the response
+      if (response.statusCode == 200) {
+        // PIN sent successfully
+        Logger().i(response.data) ;
+        user= User.fromJson(response.data)  ;
+        Logger().d(user.code) ;
+        GetStorage().write('isLoggedIn', true);
+        onLoginSuccess() ;
+        print('PIN sent successfully');
+      } else {
+        // Handle other status codes
+        print('Failed to send PIN: ${response.statusCode}');
+      }
+    } on DioError catch (e) {
+      // Handle Dio errors
+      print('Dio error: ${e.message}');
+    } catch (e) {
+      // Handle other exceptions
+      print('Exception: $e');
+    }
+  }
 }
