@@ -9,14 +9,14 @@ import 'package:pos/authentication/controllers/pin_controller.dart';
 
 import '../widgets/Pin_code_field.dart';
 
-class PinAuthScreen extends StatefulWidget {
-  const PinAuthScreen({Key? key}) : super(key: key);
+class PinScreen extends StatefulWidget {
+  const PinScreen({Key? key}) : super(key: key);
 
   @override
-  State<PinAuthScreen> createState() => _PinAuthScreenState();
+  State<PinScreen> createState() => _PinScreenState();
 }
 
-class _PinAuthScreenState extends State<PinAuthScreen> {
+class _PinScreenState extends State<PinScreen> {
   String pin = "";
   PinTheme pinTheme = PinTheme(
     keysColor: Colors.blue,
@@ -32,7 +32,6 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
     return Scaffold(
       appBar: AppBar(
          elevation: 5,
-
         title: const  Text(
           "Binevenue",
           style: TextStyle(
@@ -44,6 +43,7 @@ class _PinAuthScreenState extends State<PinAuthScreen> {
       ),
       body: SafeArea(
         child: Column(
+          key:  GlobalKey(debugLabel: "pin_screen"),
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 20),

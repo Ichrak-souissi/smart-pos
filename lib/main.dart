@@ -3,6 +3,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
+import 'app/routes/app_pages.dart';
+import 'app/routes/app_routes.dart';
 import 'authentication/views/pin_screen.dart';
 
 
@@ -14,14 +16,16 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
+  final AuthController authController = AuthController();
+
   @override
   Widget build(BuildContext context) {
-    final AuthController authController = AuthController();
 
     return GetMaterialApp(
       title: 'Flutter Auth Example',
-
-      home: authController.isLoggedIn ? HomeScreen() : const PinAuthScreen(),
+      initialRoute: Routes.HOME,
+      getPages: AppPages.pages,
+      home: authController.isLoggedIn ? HomeScreen() : const PinScreen(),
 
     );
   }
