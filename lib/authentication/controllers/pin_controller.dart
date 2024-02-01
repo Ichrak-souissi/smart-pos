@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 import 'package:pos/authentication/controllers/secure_storage.dart';
 
 import '../../main.dart';
+import '../../shared/home.dart';
 import '../models/user.dart';
 
 import 'package:dio/dio.dart';
@@ -16,7 +17,7 @@ class PinController extends GetxController {
   void onLoginSuccess() {
     AuthController().isLoggedIn = true;
     GetStorage().write('isLoggedIn', true);
-    Get.off(HomeScreen());
+    Get.off(const Home());
   }
   Future<void> sendPin(String pin) async {
     try {

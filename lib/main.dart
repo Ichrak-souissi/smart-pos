@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:pos/shared/home.dart';
 
 import 'app/routes/app_pages.dart';
 import 'app/routes/app_routes.dart';
@@ -25,25 +25,12 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Auth Example',
       initialRoute: Routes.HOME,
       getPages: AppPages.pages,
-      home: authController.isLoggedIn ? HomeScreen() : const PinScreen(),
+      home: authController.isLoggedIn ? const Home() : const PinScreen(),
 
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home Screen'),
-      ),
-      body:const Center(
-        child: Text('Welcome back!'),
-      ),
-    );
-  }
-}
 
 
 class AuthController extends GetxController {
