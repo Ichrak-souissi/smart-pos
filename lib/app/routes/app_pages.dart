@@ -8,7 +8,7 @@ class AppPages {
   static final List<GetPage> pages = [
     GetPage(
       name: Routes.HOME,
-      page: () => Home(),
+      page: () => const Home(),
     ),
     GetPage(
       name: Routes.LOGIN,

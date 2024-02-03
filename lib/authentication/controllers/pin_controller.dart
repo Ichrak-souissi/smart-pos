@@ -37,6 +37,7 @@ class PinController extends GetxController {
         Logger().i(response.data) ;
         user= User.fromJson(response.data)  ;
         Logger().d(user.code) ;
+        AuthController().isLoggedIn = true;
         GetStorage().write('isLoggedIn', true);
         onLoginSuccess() ;
         print('PIN sent successfully');

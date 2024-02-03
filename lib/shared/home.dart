@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:pos/main.dart';
 
 import '../table/views/table_grid_view.dart';
 import '../table/widgets/left_drawer_list_tile.dart';
@@ -14,9 +16,14 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
+  AuthController authController = Get.put<AuthController>(AuthController() ) ;
     return Scaffold(
+
       body: Row(
-        children: [
+        key: const ValueKey('home'),
+
+
+      children: [
           Expanded(
             flex: 1,
             child: Drawer(

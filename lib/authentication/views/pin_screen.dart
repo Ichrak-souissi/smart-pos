@@ -43,7 +43,9 @@ class _PinScreenState extends State<PinScreen> {
       ),
       body: SafeArea(
         child: Column(
-          key:  GlobalKey(debugLabel: "pin_screen"),
+
+          key: ValueKey('pin_screen'),
+
           mainAxisSize: MainAxisSize.min,
           children: [
             const SizedBox(height: 20),
@@ -63,7 +65,6 @@ class _PinScreenState extends State<PinScreen> {
             ),
             const SizedBox(height: 20),
             CustomKeyBoard(
-
               pinTheme: pinTheme,
               onChanged: (v) {
                 if (kDebugMode) {
@@ -81,7 +82,7 @@ class _PinScreenState extends State<PinScreen> {
                 size: 50,
               ),
               specialKeyOnTap: () {
-                controller.sendPin(pin) ;
+            controller.sendPin(pin) ;
 
 
 

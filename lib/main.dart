@@ -21,9 +21,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
+
     return GetMaterialApp(
-      title: 'Flutter Auth Example',
-      initialRoute: Routes.HOME,
+      debugShowCheckedModeBanner: false,
+
+      initialRoute: Routes.LOGIN,
       getPages: AppPages.pages,
       home: authController.isLoggedIn ? const Home() : const PinScreen(),
 
