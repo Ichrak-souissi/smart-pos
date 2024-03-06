@@ -12,11 +12,12 @@ class LeftDrawerListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return  Container(
       decoration: BoxDecoration(
-        color: Colors.yellow.shade600,
+        color: Colors.green.shade400,
         borderRadius: BorderRadius.circular(12),
+
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           IconButton(

@@ -1,4 +1,3 @@
-
 import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:pos/app/routes/app_routes.dart';
 import '../../authentication/views/pin_screen.dart';
@@ -12,7 +11,10 @@ class AppPages {
     ),
     GetPage(
       name: Routes.LOGIN,
-      page: () => const PinScreen(),
+      page: () {
+        return PinScreen(
+        );
+      },
     ),
   ];
 }
