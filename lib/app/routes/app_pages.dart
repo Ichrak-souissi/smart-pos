@@ -12,7 +12,7 @@ class AppPages {
     GetPage(
       name: Routes.LOGIN,
       page: () {
-        return PinScreen(
+        return const PinScreen(
         );
       },
     ),

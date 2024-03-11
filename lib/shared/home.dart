@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pos/table/views/table_grid_view.dart';
-import 'package:pos/table/widgets/left_drawer_list_tile.dart';
+import 'package:get_storage/get_storage.dart';
+import 'package:pos/authentication/controllers/auth_controller.dart';
 
-import '../authentication/controllers/auth_controller.dart';
-
+import '../table/views/table_grid_view.dart';
+import '../table/widgets/left_drawer.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({Key? key});
 
   @override
   State<Home> createState() => _HomeState();
 }
 
 class _HomeState extends State<Home> {
-  final AuthController authController = Get.put(AuthController());
-
   @override
   Widget build(BuildContext context) {
+    AuthController authController = Get.put<AuthController>(AuthController());
+
     return Scaffold(
       body: Row(
         key: const ValueKey('home'),
@@ -30,47 +30,53 @@ class _HomeState extends State<Home> {
               shadowColor: Colors.white10,
               surfaceTintColor: Colors.white,
               child: ListView(
-                padding: const EdgeInsets.only(left: 10, top: 10),
+                padding: const EdgeInsets.only(left: 10, top: 30 , right: 10),
                 shrinkWrap: true,
                 children: [
-                  ListTile(
-                    title: const Text(
-                      "Smart pos",
-                      style: TextStyle(fontSize: 20),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    leading: Image.asset("assets/images/cutlery.png"),
+              ListTile(
+              title: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                   SizedBox(
+                       height: 50,
+                       child: Image.asset("assets/images/logo.png")
+                   ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    "Smart pos",
+                    style: TextStyle(fontSize: 20),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                ],
+              ),
+            ),
+                  const SizedBox(height: 20),
                   GestureDetector(
                     onTap: () {
-                      //Get.to() ,
+                      Get.to(const Home()) ;
                     },
                     child: LeftDrawerListTile(
-                        "Tables", const Icon(Icons.table_bar)),
+                      const Icon(Icons.table_bar, color: Colors.white),
+                    ),
                   ),
-                  const SizedBox(
-                    height: 10,
+                  const SizedBox(height: 10),
+                  LeftDrawerListTile(
+                    const Icon(Icons.fastfood_outlined, color: Colors.white),
                   ),
-                  LeftDrawerListTile("food", const Icon(Icons.fastfood_outlined)),
-                  const SizedBox(
-                    height: 15,
+                  const SizedBox(height: 15),
+                  LeftDrawerListTile(
+                    const Icon(Icons.monetization_on_outlined, color: Colors.white),
                   ),
-                  LeftDrawerListTile("bills", const Icon(Icons.monetization_on_outlined)),
-                  const SizedBox(
-                    height: 15,
-                  ),
+                  const SizedBox(height: 15),
                 ],
               ),
             ),
           ),
           // Middle column (biggest)
-          const Expanded(
+          Expanded(
             flex: 6,
             child: Padding(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               child: TableGridView(),
             ),
           ),

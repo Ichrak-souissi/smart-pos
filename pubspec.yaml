@@ -22,7 +22,7 @@ dependencies:
   cupertino_icons: ^1.0.2
   get: ^4.6.6
   logger: ^2.0.2+1
-  dio: ^5.4.0
+  dio: ^5.4.1
   custom_pin_screen: ^0.5.0
   iconsax: ^0.0.8
   cached_network_image: ^3.3.1
@@ -31,6 +31,9 @@ dependencies:
   flutter_secure_storage: ^9.0.0
   get_storage: ^2.1.1
   flutter_keyboard_visibility: ^6.0.0
+  shimmer: ^3.0.0
+  sidebarx: ^0.16.3
+
 
 dev_dependencies:
   flutter_test:
@@ -51,7 +54,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

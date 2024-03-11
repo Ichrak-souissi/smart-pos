@@ -1,51 +1,46 @@
-
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:dio/dio.dart';
-import '../../main.dart';
+import 'package:pos/authentication/controllers/auth_controller.dart';
+import 'package:pos/constants.dart';
+
+import '../../Dio/client_dio.dart';
 import '../../shared/home.dart';
 import '../models/user.dart';
-import 'auth_controller.dart';
 
 class PinController extends GetxController {
-  final Dio _dio = Dio();
-  final String _pinUrl = 'http://127.0.0.1:3000/users/login';
-  late final User user;
-
-  void onLoginSuccess() {
-    AuthController().setLoggedIn(true);
-    GetStorage().write('isLoggedIn', true);
-    Get.off(const Home());
-  }
+  final ClientDio _clientDio = ClientDio();
+  late User? user;
 
   Future<void> sendPin(String pin) async {
     try {
-      final response = await _dio.post(
-        _pinUrl,
+      final response = await _clientDio.dio.post(
+        Constants.getLoginUrl(),
         data: {'code': pin},
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
       );
 
       if (response.statusCode == 200) {
         Logger().i(response.data);
         user = User.fromJson(response.data);
-        Logger().d(user.code);
-        AuthController().setLoggedIn(true);
+        Logger().d(user!.code);
+        AuthController().isLoggedIn(true);
         GetStorage().write('isLoggedIn', true);
-        onLoginSuccess();
-        print('PIN envoyé avec succès: $pin');
+        Get.offAll(const Home());
       } else {
-        print('Échec de l\'envoi du PIN: ${response.statusCode}');
+        // Handle other status codes using DioError
+        throw DioError(
+          response: response,
+          requestOptions: response.requestOptions,
+        );
       }
     } on DioError catch (e) {
-      print('Erreur Dio: ${e.message}');
-    } catch (e) {
-      print('Exception: $e');
+      if (e.response?.statusCode == 404) {
+        Get.snackbar('Le code tapé est incorrect', 'Vérifiez votre code pin ');
+      }
+    }catch (e) {
+      print('$e');
+      Get.snackbar('Erreur', '$e');
     }
   }
 }

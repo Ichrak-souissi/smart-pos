@@ -8,7 +8,6 @@ class TableShape  {
   final double height;
   final double legWidth;
   final double legHeight;
-
   TableShape({
     required this.width,
     required this.height,
@@ -104,10 +103,11 @@ class TablePainting extends StatelessWidget {
     return CustomPaint(
       size: Size(width, height),
       painter: TablePainter(
-        width: width,
-        height: height,
-        legWidth: legWidth,
-        legHeight: legHeight, numPersons: 5
+          width: width,
+          height: height,
+          legWidth: legWidth,
+          legHeight: legHeight,
+          numPersons: 5
       ),
     );
   }
