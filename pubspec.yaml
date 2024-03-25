@@ -32,8 +32,10 @@ dependencies:
   get_storage: ^2.1.1
   flutter_keyboard_visibility: ^6.0.0
   shimmer: ^3.0.0
-  sidebarx: ^0.16.3
-
+  flutter_neumorphic: ^3.2.0
+  intl: any
+  fluentui_system_icons: ^1.1.231
+  flutter_screenutil: ^5.9.0
 
 dev_dependencies:
   flutter_test:

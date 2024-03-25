@@ -1,58 +1,32 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
-import 'package:logger/logger.dart';
+import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/table/models/table.dart';
+import '../../constants.dart';
 
-class TableController extends GetxController  {
-
-
-List  tableList = [] ;
-
-final Dio _dio = Dio();
-
-
-final String _pinUrl = 'http://127.0.0.1:3000/table';
-
-
-Future<void>   getTableList()async {
-  try {
-    final response = await _dio.get(
-      _pinUrl,
-      options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      ),
-    );
-
-    // Handle the response
-    if (response.statusCode == 200) {
-      // PIN sent successfully
-      Logger().i(response.data) ;
-    //Map<String, dynamic> jsonMap =   tableFromJson(response.data) ;
-
-  print('PIN sent successfully');
-    } else {
-      // Handle other status codes
-      print('Failed to send PIN: ${response.statusCode}');
+class TableController extends GetxController {
+  RxList<Table> tableList = <Table>[].obs;
+  final ClientDio _clientDio = ClientDio();
+  Future<void> getTableList() async {
+    try {
+      final response = await _clientDio.dio.get(
+        Constants.getTableUrl(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> tablesJson = response.data;
+        final List<Table> tables = tablesJson.map((tableJson) => Table.fromJson(tableJson)).toList();
+        tableList.assignAll(tables);
+        print(tableList);
+      } else {
+        print('Failed to get table list: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('$e');
     }
-  } on DioError catch (e) {
-    // Handle Dio errors
-    print('Dio error: ${e.message}');
-  } catch (e) {
-    // Handle other exceptions
-    print('Exception: $e');
   }
-}
-// function t o get all the tables
-
-
-
-
-
-
-
-
-
 }

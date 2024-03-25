@@ -26,10 +26,10 @@ class PinController extends GetxController {
         Logger().d(user!.code);
         AuthController().isLoggedIn(true);
         GetStorage().write('isLoggedIn', true);
-        Get.offAll(const Home());
+        Get.offAll( Home());
       } else {
         // Handle other status codes using DioError
-        throw DioError(
+        throw (
           response: response,
           requestOptions: response.requestOptions,
         );
