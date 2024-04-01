@@ -18,13 +18,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       child: AppBar(
         backgroundColor: Colors.white,
-        leading: Padding(
-          padding: const EdgeInsets.only(left: 16.0),
-          child: Image.asset(
-            'assets/images/logo.png',
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.image),
-          ),
-        ),
         title: Text(
           'Pos restaurant',
           style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold, fontFamily: 'Roboto'), // Modern typography and color

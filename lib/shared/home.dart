@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:pos/category/views/category_view.dart';
 
 import '../authentication/controllers/auth_controller.dart';
 import '../table/views/table_grid_view.dart';
@@ -79,7 +80,7 @@ class _HomeState extends State<Home> {
                       navigateToPage(0);
                     },
                     icon: Icons.dashboard_outlined,
-                    text: "Dashboard",
+                    text: "Tableau de bord",
                     selectedIcon: selectedPage,
                     index: 0, // Index du bouton
                   ),
@@ -89,7 +90,7 @@ class _HomeState extends State<Home> {
                       navigateToPage(1);
                     },
                     icon: Icons.table_bar,
-                    text: "Table management",
+                    text: "Gestion des tables",
                     selectedIcon: selectedPage,
                     index: 1, // Index du bouton
                   ),
@@ -99,17 +100,17 @@ class _HomeState extends State<Home> {
                       navigateToPage(2);
                     },
                     icon: Icons.restaurant_menu_outlined,
-                    text: "Dishes management ",
+                    text: "Gestion des plats ",
                     selectedIcon: selectedPage,
                     index: 2, // Index du bouton
                   ),
                   SizedBox(height:10),
                   CustomIconButton(
                     onTap: () {
-                      navigateToPage(3); // Naviguer vers la page correspondante
+                      navigateToPage(3);
                     },
                     icon: Icons.reorder_outlined,
-                    text: "Order Line",
+                    text: "Getsion des commandes ",
                     selectedIcon: selectedPage,
                     index: 3, // Index du bouton
                   ),
@@ -119,7 +120,7 @@ class _HomeState extends State<Home> {
                       navigateToPage(5);
                     },
                     icon: Icons.logout_outlined,
-                    text: "Logout",
+                    text: "Déconnecter",
                     selectedIcon: selectedPage,
                     index: 5, // Index du bouton
                   ),
@@ -129,13 +130,13 @@ class _HomeState extends State<Home> {
           ),
           // views
           Expanded(
-            flex: 7,
+            flex: 8,
             child: IndexedStack(
               index: selectedPage,
               children: [
                 DashboardPage(),
                 TableGridView(),
-                RoomManagementPage(),
+                CategoryView(),
                 DashboardPage(),
                 DashboardPage(),
                 LoginPage(),
@@ -176,19 +177,7 @@ class TableManagementPage extends StatelessWidget {
   }
 }
 
-class RoomManagementPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Room Management'),
-      ),
-      body: Center(
-        child: Text('Room Management Page'),
-      ),
-    );
-  }
-}
+
 
 class LoginPage extends StatelessWidget {
   @override
