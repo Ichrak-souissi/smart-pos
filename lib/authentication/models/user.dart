@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-import 'package:equatable/equatable.dart';
 
 class User extends Equatable {
   final int id;
@@ -9,7 +8,7 @@ class User extends Equatable {
   final String code;
   final int phone;
 
-  User({
+  const User({
     required this.id,
     required this.name,
     required this.role,

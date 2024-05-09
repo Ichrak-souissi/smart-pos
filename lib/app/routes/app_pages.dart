@@ -8,15 +8,15 @@ class AppPages {
   static final List<GetPage> pages = [
     GetPage(
       name: Routes.HOME,
-      page: () => Home(),
+      page: () => const Home(),
     ),
     GetPage(
       name: Routes.LOGIN,
       page: () => const PinScreen(),
     ),
     GetPage(
-      name: Routes.TableManagement,
-      page: () => const TableGridView(),
+      name: Routes.RoomManagement,
+      page: () => const RoomView(),
     ),
   ];
 }

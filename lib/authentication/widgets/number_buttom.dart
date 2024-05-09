@@ -22,7 +22,7 @@ class NumberButton extends StatelessWidget {
           backgroundColor: Colors.transparent,
           child: Text(
             number.toString(),
-            style: TextStyle(color: Colors.black),
+            style: const TextStyle(color: Colors.black),
           ),
         ),
       ),

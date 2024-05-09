@@ -17,6 +17,8 @@ void main() async {
 class MyApp extends StatelessWidget {
   final AuthController authController = AuthController();
 
+  MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
@@ -25,9 +27,9 @@ class MyApp extends StatelessWidget {
       getPages: AppPages.pages,
       home: Obx(() {
         if (authController.isLoggedIn.value == true) {
-          return Home();
+          return const Home();
         } else {
-          return PinScreen(
+          return const PinScreen(
           );
         }
       }),

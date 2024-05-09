@@ -10,7 +10,7 @@ class Table {
   bool active;
   bool reserved;
   int position;
-  int? room;
+  int roomId;
 
   Table({
     required this.id,
@@ -18,7 +18,7 @@ class Table {
     required this.active,
     required this.reserved,
     required this.position,
-    this.room, 
+    required this.roomId, 
   });
 
   factory Table.fromJson(Map<String, dynamic> json) => Table(
@@ -27,7 +27,7 @@ class Table {
     active: json["active"],
     reserved: json["reserved"],
     position: json["position"],
-    room: json["room"],
+    roomId: json["roomId"],
   );
 
   Map<String, dynamic> toJson() => {
@@ -36,6 +36,6 @@ class Table {
     "active": active,
     "reserved": reserved,
     "position": position,
-    "room": room,
+    "roomId": roomId,
   };
 }

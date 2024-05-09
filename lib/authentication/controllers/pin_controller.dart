@@ -26,9 +26,8 @@ class PinController extends GetxController {
         Logger().d(user!.code);
         AuthController().isLoggedIn(true);
         GetStorage().write('isLoggedIn', true);
-        Get.offAll( Home());
+        Get.offAll( const Home());
       } else {
-        // Handle other status codes using DioError
         throw (
           response: response,
           requestOptions: response.requestOptions,
@@ -39,7 +38,6 @@ class PinController extends GetxController {
         Get.snackbar('Le code tapé est incorrect', 'Vérifiez votre code pin ');
       }
     }catch (e) {
-      print('$e');
       Get.snackbar('Erreur', '$e');
     }
   }

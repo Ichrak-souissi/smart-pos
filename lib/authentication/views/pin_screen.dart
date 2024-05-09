@@ -7,6 +7,7 @@ import '../controllers/pin_controller.dart';
 import '../widgets/Pin_code_field.dart';
 import '../widgets/number_buttom.dart';
 
+
 class PinScreen extends StatefulWidget {
   const PinScreen({Key? key}) : super(key: key);
 

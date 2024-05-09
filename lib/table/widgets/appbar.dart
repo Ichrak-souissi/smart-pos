@@ -11,19 +11,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: Colors.grey.shade200, // Couleur de la bordure du bas
-            width: 0.5, // Largeur de la bordure du bas
+            color: Colors.grey.shade200,
+            width: 0.5,
           ),
         ),
       ),
       child: AppBar(
-        backgroundColor: Colors.white,
-        title: Text(
+        backgroundColor: Colors.green.shade400, // Change the color here
+        title: const Text(
           'Pos restaurant',
-          style: TextStyle(fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold, fontFamily: 'Roboto'), // Modern typography and color
+          style: TextStyle(fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Roboto'), // Modern typography and color
         ),
         actions: [
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Container(
@@ -34,15 +34,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               child: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.access_time,
                     color: Colors.black,
                     size: 20,
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Text(
                     currentTime,
-                    style: TextStyle(fontSize: 14, color: Colors.black),
+                    style: const TextStyle(fontSize: 14, color: Colors.black),
                   ),
                 ],
               ),
@@ -50,17 +50,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           IconButton(
             onPressed: () {},
-            icon: Icon(
+            icon: const Icon(
               Icons.notifications_outlined,
-              color: Colors.black,
+              color: Colors.white,
             ),
           ),
-
           IconButton(
             onPressed: () {},
-            icon: Icon(
+            icon: const Icon(
               Icons.settings,
-              color: Colors.black,
+              color: Colors.white,
             ),
           ),
         ],
@@ -69,7 +68,5 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   @override
-  Size get preferredSize => Size.fromHeight(kToolbarHeight);
-
-
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }
