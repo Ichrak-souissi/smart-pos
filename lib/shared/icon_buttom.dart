@@ -3,12 +3,12 @@ import 'package:pos/app_theme.dart';
 
 class CustomIconButton extends StatelessWidget {
   const CustomIconButton({
-    Key? key,
+    super.key,
     required this.onTap,
     required this.icon,
     required this.selectedIcon,
     required this.index,
-  }) : super(key: key);
+  });
 
   final VoidCallback onTap;
   final IconData icon;

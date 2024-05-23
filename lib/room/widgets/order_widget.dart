@@ -1,26 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
-import 'package:pos/category/views/payement_page.dart';
+import 'package:pos/order-item/models/order-item.dart';
+import 'package:pos/room/widgets/tab_content.dart';
 import 'package:pos/ingredient/models/ingredient.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/item/views/item_view.dart';
+import 'package:pos/supplement/models/supplement.dart';
+import 'package:pos/table/controllers/table_controller.dart';
 
-class CategoryView extends StatefulWidget {
-  const CategoryView({Key? key}) : super(key: key);
+class OrderWidget extends StatefulWidget {
+  final int selectedTableId;
+  const OrderWidget({super.key, required this.selectedTableId});
 
   @override
-  State<CategoryView> createState() => _CategoryViewState();
+  State<OrderWidget> createState() => _OrderWidgetState();
 }
 
-class _CategoryViewState extends State<CategoryView> {
+
+
+class _OrderWidgetState extends State<OrderWidget> {
   final CategoryController categoryController = Get.put(CategoryController());
+  final TableController tableController = Get.put(TableController());
 
   int selectedCardIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  String? selectedTableId;
   Map<Item, int> orderMap = {};
 
   double calculateTotal(Map<Item, int> orderMap) {
@@ -33,6 +40,7 @@ class _CategoryViewState extends State<CategoryView> {
     }
     return total;
   }
+
 
   @override
   void initState() {
@@ -55,21 +63,45 @@ class _CategoryViewState extends State<CategoryView> {
     return createdAt.isAfter(weekAgo);
   }
 
-  void addToOrder(Item item, int quantity, List<Ingredient> selectedIngredients) {
+  Map<Item, int> addToOrder(Item item, int quantity, List<Ingredient> selectedIngredients,
+      List<Supplement> selectedSupplements, double totalPrice) {
+    Item newItem = Item(
+      id: item.id,
+      name: item.name,
+      categoryId: item.categoryId,
+      description: item.description,
+      duration: item.duration,
+      imageUrl: item.imageUrl,
+      discount: item.discount,
+      price: totalPrice,
+      calories: item.calories,
+      createdAt: item.createdAt,
+      ingredients: selectedIngredients,
+      supplements: selectedSupplements,
+    );
+
+    Map<Item, int> newOrderMap = Map.from(orderMap);
+
+    if (newOrderMap.containsKey(newItem)) {
+      newOrderMap[newItem] = newOrderMap[newItem]! + quantity;
+
+      double updatedTotalPrice = newItem.price * newOrderMap[newItem]!;
+      newItem.price = updatedTotalPrice;
+    } else {
+      newOrderMap[newItem] = quantity;
+    }
+
     setState(() {
-      if (orderMap.containsKey(item)) {
-        orderMap[item] = orderMap[item]! + quantity;
-      } else {
-        orderMap[item] = quantity;
-      }
+      orderMap = newOrderMap;
     });
+
+    return orderMap;
   }
 
   int _calculateCrossAxisCount(double width) {
-    int crossAxisCount = (width / 160).floor();
+    int crossAxisCount = (width / 180).floor();
     return crossAxisCount > 0 ? crossAxisCount : 1;
   }
-
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -81,7 +113,7 @@ class _CategoryViewState extends State<CategoryView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Flexible(
-                flex: 5,
+                flex: 8,
                 fit: FlexFit.tight,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -209,8 +241,8 @@ class _CategoryViewState extends State<CategoryView> {
                       padding: const EdgeInsets.all(8.0),
                       child: TabBar(
                         isScrollable: true,
-                        labelColor: AppTheme.lightTheme.primaryColor,
-                        indicatorColor: AppTheme.lightTheme.primaryColor,
+                        indicatorColor:Colors.redAccent,
+                        labelColor: Colors.redAccent,
                         tabs: List.generate(
                           categoryController.categoryList.length,
                           (index) => Tab(
@@ -221,7 +253,8 @@ class _CategoryViewState extends State<CategoryView> {
                           setState(() {
                             selectedCardIndex = index;
                           });
-                          await categoryController.getItemsByCategoryId(categoryController.categoryList[index].id);
+                          await categoryController.getItemsByCategoryId(
+                              categoryController.categoryList[index].id);
                         },
                       ),
                     ),
@@ -239,7 +272,8 @@ class _CategoryViewState extends State<CategoryView> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: LayoutBuilder(
                                   builder: (context, constraints) {
-                                    int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
+                                    int crossAxisCount =
+                                        _calculateCrossAxisCount(constraints.maxWidth);
                                     return GridView.builder(
                                       shrinkWrap: true,
                                       physics: const AlwaysScrollableScrollPhysics(),
@@ -251,14 +285,16 @@ class _CategoryViewState extends State<CategoryView> {
                                       ),
                                       itemCount: categoryController.categoryItems.length,
                                       itemBuilder: (context, index) {
-                                        final item = categoryController.categoryItems[index];
+                                        final item =
+                                            categoryController.categoryItems[index];
                                         final isNew = isNewItem(item.createdAt);
                                         return Stack(
                                           children: [
                                             Container(
                                               decoration: BoxDecoration(
                                                 borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: Colors.grey.shade200, width: 1),
+                                                border: Border.all(
+                                                    color: Colors.grey.shade200, width: 1),
                                                 color: Colors.white,
                                               ),
                                               child: Center(
@@ -267,36 +303,41 @@ class _CategoryViewState extends State<CategoryView> {
                                                     const SizedBox(height: 10),
                                                     Expanded(
                                                       child: Padding(
-                                                        padding: const EdgeInsets.all(5.0),
+                                                        padding:
+                                                            const EdgeInsets.all(5.0),
                                                         child: Container(
-                                                          width: 130,
+                                                          width: 150,
                                                           height: 95,
                                                           decoration: BoxDecoration(
                                                             shape: BoxShape.rectangle,
-                                                            borderRadius: BorderRadius.circular(10),
-                                                            image: DecorationImage(
-                                                              image: NetworkImage(item.imageUrl),
-                                                              fit: BoxFit.cover,
-                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(10),
+                                                            //image: DecorationImage(
+                                                            //  image: NetworkImage(item.imageUrl),
+                                                            // fit: BoxFit.cover,
+                                                            //),
                                                           ),
                                                         ),
                                                       ),
                                                     ),
                                                     Padding(
-                                                      padding: const EdgeInsets.all(5.0),
+                                                      padding:
+                                                          const EdgeInsets.all(5.0),
                                                       child: Text(
                                                         item.name,
                                                         style: const TextStyle(
                                                           fontWeight: FontWeight.bold,
                                                           fontSize: 17,
                                                         ),
-                                                        overflow: TextOverflow.ellipsis,
+                                                        overflow:
+                                                            TextOverflow.ellipsis,
                                                       ),
                                                     ),
                                                     Row(
                                                       children: [
                                                         const Padding(
-                                                          padding: EdgeInsets.only(left: 10, right: 5),
+                                                          padding: EdgeInsets.only(
+                                                              left: 10, right: 5),
                                                           child: Icon(
                                                             Icons.whatshot_sharp,
                                                             color: Colors.orange,
@@ -313,10 +354,12 @@ class _CategoryViewState extends State<CategoryView> {
                                                       ],
                                                     ),
                                                     Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.spaceBetween,
                                                       children: [
                                                         Padding(
-                                                          padding: const EdgeInsets.all(10),
+                                                          padding:
+                                                              const EdgeInsets.all(10),
                                                           child: Text(
                                                             '${item.price.toStringAsFixed(2)} dt',
                                                             style: TextStyle(
@@ -328,16 +371,23 @@ class _CategoryViewState extends State<CategoryView> {
                                                         ),
                                                         GestureDetector(
                                                           onTap: () {
-                                                            ItemView().show(context, item, 1, addToOrder);
+                                                            ItemView().show(
+                                                              context,
+                                                              item,
+                                                              1,
+                                                              addToOrder,
+                                                            );
                                                           },
                                                           child: Padding(
-                                                            padding: const EdgeInsets.all(10),
+                                                            padding:
+                                                                const EdgeInsets.all(10),
                                                             child: Container(
                                                               width: 25,
                                                               height: 25,
                                                               decoration: BoxDecoration(
                                                                 shape: BoxShape.circle,
-                                                                color: AppTheme.lightTheme.primaryColor,
+                                                                color: AppTheme.lightTheme
+                                                                    .primaryColor,
                                                               ),
                                                               child: const Center(
                                                                 child: Icon(
@@ -359,7 +409,8 @@ class _CategoryViewState extends State<CategoryView> {
                                                 top: 0,
                                                 left: 0,
                                                 child: Container(
-                                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                                  padding: const EdgeInsets.symmetric(
+                                                      horizontal: 5, vertical: 2),
                                                   decoration: const BoxDecoration(
                                                     color: Colors.red,
                                                     borderRadius: BorderRadius.only(
@@ -369,7 +420,27 @@ class _CategoryViewState extends State<CategoryView> {
                                                   ),
                                                   child: const Text(
                                                     'New',
-                                                    style: TextStyle(color: Colors.white, fontSize: 10),
+                                                    style: TextStyle(
+                                                        color: Colors.white, fontSize: 10),
+                                                  ),
+                                                ),
+                                              ),
+                                            if (item.discount != null) 
+                                              Positioned(
+                                                top: 5,
+                                                right: 5, 
+                                                child: Container(
+                                                  width: 33,
+                                                  height: 33,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.yellowAccent,
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      '-${item.discount.toString()}%',
+                                                      style: TextStyle(color: Colors.black, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, fontSize: 13),
+                                                    ),
                                                   ),
                                                 ),
                                               ),
@@ -388,12 +459,26 @@ class _CategoryViewState extends State<CategoryView> {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+const SizedBox(width: 10),
               Flexible(
-                flex: 2,
+                flex: 4,
                 fit: FlexFit.tight,
-                child: PaymentPage(orderMap: orderMap, calculateTotal: calculateTotal),
-              ),
+                child: Container(
+        color: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(height: 20,),
+             TabContent(
+              orderMap: orderMap,
+              calculateTotal: calculateTotal,
+               selectedTableId: widget.selectedTableId.toString() ,
+            ),
+          ],
+        ),
+      ),
+              ),              
             ],
           ),
         ),

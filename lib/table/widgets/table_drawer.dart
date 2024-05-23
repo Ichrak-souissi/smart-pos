@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class TableDrawer extends StatelessWidget {
-  const TableDrawer({Key? key}) : super(key: key);
+  const TableDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {

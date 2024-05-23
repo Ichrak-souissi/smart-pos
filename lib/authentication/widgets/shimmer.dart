@@ -4,7 +4,7 @@ import 'package:shimmer/shimmer.dart';
 class ShimmerCodePin extends StatelessWidget {
   final Widget child;
 
-  const ShimmerCodePin({Key? key, required this.child}) : super(key: key);
+  const ShimmerCodePin({super.key, required this.child});
 
   @override
   Widget build(BuildContext context) {

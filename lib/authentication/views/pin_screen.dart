@@ -9,7 +9,7 @@ import '../widgets/number_buttom.dart';
 
 
 class PinScreen extends StatefulWidget {
-  const PinScreen({Key? key}) : super(key: key);
+  const PinScreen({super.key});
 
   @override
   State<PinScreen> createState() => _PinScreenState();

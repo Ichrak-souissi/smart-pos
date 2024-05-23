@@ -4,16 +4,21 @@ import 'package:pos/app_theme.dart';
 import 'package:pos/item/controllers/item_controller.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/ingredient/models/ingredient.dart';
+import 'package:pos/supplement/controller/supplement_controller.dart';
+import 'package:pos/supplement/models/supplement.dart';
 
 class ItemView {
-  void show(BuildContext context, Item item, int quantity, Function(Item, int, List<Ingredient>) onItemSelected) {
+  void show(BuildContext context, Item item, int quantity, Function(Item, int, List<Ingredient>, List<Supplement>, double) onItemSelected) {
     RxInt selectedQuantity = quantity.obs;
     List<int> selectedIngredientIds = [];
+    List<int> selectedSupplementIds = [];
     List<Ingredient> ingredients = [];
+    List<Supplement> supplements = [];
+    double totalItemPrice = item.discount != null ? item.price * (1 - item.discount! / 100) : item.price.toDouble();
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Empêche le dialogue de se fermer lorsqu'on appuie en dehors
+      barrierDismissible: false,
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
@@ -50,16 +55,40 @@ class ItemView {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Container(
-                                      width: 100,
-                                      height: 100,
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(12),
-                                        image: DecorationImage(
-                                          image: NetworkImage(item.imageUrl),
-                                          fit: BoxFit.cover,
+                                    Stack(
+                                      children: [
+                                        Container(
+                                          width: 100,
+                                          height: 100,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(12),
+                                           // image: DecorationImage(
+                                            //  image: NetworkImage(item.imageUrl),
+                                             // fit: BoxFit.cover,
+                                            ),
+                                        //  ),
                                         ),
-                                      ),
+                                        if (item.discount != null)
+                                          Positioned(
+                                            top: 0,
+                                            right: 0,
+                                            child: Container(
+                                              padding: const EdgeInsets.all(4),
+                                              decoration: BoxDecoration(
+                                                color: Colors.yellowAccent,
+                                                borderRadius: BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                '-${item.discount}%',
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontStyle: FontStyle.italic
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 10),
                                     Center(
@@ -69,6 +98,7 @@ class ItemView {
                                           fontWeight: FontWeight.bold,
                                           fontSize: 20,
                                         ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
                                     const SizedBox(height: 10),
@@ -90,7 +120,7 @@ class ItemView {
                                   ],
                                 ),
                               ),
-                              Divider(color: Colors.black),
+                              const Divider(color: Colors.black),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +134,7 @@ class ItemView {
                                     ),
                                     const SizedBox(height: 5),
                                     const Text(
-                                      'Choisissez vos ingrédients',
+                                      'Choisissez les ingrédients',
                                       style: TextStyle(
                                         color: Colors.grey,
                                         fontSize: 14,
@@ -146,6 +176,70 @@ class ItemView {
                                   ],
                                 ),
                               ),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Suppléments:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    const Text(
+                                      'Choisissez les suppléments',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    FutureBuilder<List<Supplement>>(
+                                      future: SupplementController().getSuppelmentsByItemId(item.id),
+                                      builder: (BuildContext context, AsyncSnapshot<List<Supplement>> snapshot) {
+                                        if (snapshot.connectionState == ConnectionState.waiting) {
+                                          return const Center(child: CircularProgressIndicator());
+                                        } else if (snapshot.hasError) {
+                                          return const Text('Une erreur');
+                                        } else {
+                                          supplements = snapshot.data ?? [];
+                                          return Column(
+                                            children: supplements.map((supplement) {
+                                              return CheckboxListTile(
+                                                title: Row(
+                                                  children: [
+                                                    Text(
+                                                      supplement.name,
+                                                      style: const TextStyle(fontSize: 16),
+                                                    ),
+                                                    Text(
+                                                      ' (+${supplement.price.toStringAsFixed(2)}dt)',
+                                                      style: const TextStyle(fontSize: 12, color: Colors.blue),
+                                                    ),
+                                                  ],
+                                                ),
+                                                value: selectedSupplementIds.contains(supplement.id),
+                                                onChanged: (newValue) {
+                                                  setState(() {
+                                                    if (newValue == true) {
+                                                      selectedSupplementIds.add(supplement.id);
+                                                      totalItemPrice += supplement.price;
+                                                    } else {
+                                                      selectedSupplementIds.remove(supplement.id);
+                                                      totalItemPrice -= supplement.price;
+                                                    }
+                                                  });
+                                                },
+                                              );
+                                            }).toList(),
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              )
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -161,9 +255,9 @@ class ItemView {
                                 },
                               ),
                               Obx(() => Text(
-                                    selectedQuantity.value.toString(),
-                                    style: const TextStyle(fontSize: 16),
-                                  )),
+                                selectedQuantity.value.toString(),
+                                style: const TextStyle(fontSize: 16),
+                              )),
                               IconButton(
                                 icon: const Icon(Icons.add, color: Colors.black),
                                 onPressed: () {
@@ -177,15 +271,23 @@ class ItemView {
                             child: ElevatedButton(
                               onPressed: () {
                                 List<Ingredient> selectedIngredients = [];
-                                selectedIngredientIds.forEach((id) {
+                                for (var id in selectedIngredientIds) {
                                   Ingredient selectedIngredient = ingredients.firstWhere((ingredient) => ingredient.id == id);
                                   selectedIngredients.add(selectedIngredient);
+                                }
 
-                                });
-                                onItemSelected(item, selectedQuantity.value, selectedIngredients);
-                               Navigator.of(context).pop(); 
+                                List<Supplement> selectedSupplements = [];
+                                for (var id in selectedSupplementIds) {
+                                  Supplement selectedSupplement = supplements.firstWhere((supplement) => supplement.id == id);
+                                  selectedSupplements.add(selectedSupplement);
+                                }
+                                onItemSelected(item, selectedQuantity.value, selectedIngredients, selectedSupplements, totalItemPrice);
+                                Navigator.of(context).pop();
                               },
-                              child: const Text('Commander',style: TextStyle(color: Colors.white),),
+                              child: Text(
+                                'Commander pour ${totalItemPrice.toStringAsFixed(2) * quantity} dt ',
+                                style: const TextStyle(color: Colors.redAccent),
+                              ),
                             ),
                           ),
                         ],
@@ -196,7 +298,7 @@ class ItemView {
                     top: 0,
                     right: 0,
                     child: IconButton(
-                      icon: Icon(Icons.close),
+                      icon: const Icon(Icons.close),
                       onPressed: () {
                         Navigator.of(context).pop();
                       },

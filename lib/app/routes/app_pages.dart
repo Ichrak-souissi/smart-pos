@@ -1,6 +1,6 @@
 import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:pos/app/routes/app_routes.dart';
-import 'package:pos/table/views/table_grid_view.dart';
+import 'package:pos/room/views/room_view.dart';
 import '../../authentication/views/pin_screen.dart';
 import '../../shared/home.dart';
 

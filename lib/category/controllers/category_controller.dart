@@ -15,6 +15,7 @@ class CategoryController extends GetxController {
 
   final ClientDio _clientDio = ClientDio();
 
+
   Future<List<Category>> getCategoryList() async {
     try {
       isLoading.value = true; 

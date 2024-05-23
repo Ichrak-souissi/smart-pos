@@ -6,14 +6,16 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/views/pin_screen.dart';
-import 'package:pos/category/views/category_view.dart';
+import 'package:pos/order/views/order_view.dart';
+import 'package:pos/reservation/views/reservation_table.dart';
 import 'package:pos/room/views/room_view.dart';
-import '../table/widgets/Iconbuttom.dart';
+import 'package:pos/shared/icon_buttom.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key);
+  const Home({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _HomeState createState() => _HomeState();
 }
 
@@ -75,7 +77,7 @@ class _HomeState extends State<Home> {
     child: Container(
       decoration: BoxDecoration(
         color: AppTheme.lightTheme.primaryColor,
-        borderRadius: BorderRadius.circular(20.0), // Ajoute des bordures circulaires
+        borderRadius: BorderRadius.circular(20.0), 
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -86,9 +88,8 @@ class _HomeState extends State<Home> {
               navigateToPage(0);
             },
             icon: Icons.dashboard_outlined,
-            //text: "Tableau de bord",
             selectedIcon: selectedPage,
-            index: 0, // Index du bouton
+            index: 0, 
           ),
           const SizedBox(height: 10),
           CustomIconButton(
@@ -96,30 +97,22 @@ class _HomeState extends State<Home> {
               navigateToPage(1);
             },
             icon: Icons.table_bar,
-            // text: "Gestion des tables",
             selectedIcon: selectedPage,
-            index: 1, // Index du bouton
+            index: 1, 
           ),
+         
           const SizedBox(height: 10),
           CustomIconButton(
             onTap: () {
               navigateToPage(2);
             },
-            icon: Icons.restaurant_menu_outlined,
-            //   text: "Gestions des plats",
-            selectedIcon: selectedPage,
-            index: 2, // Index du bouton
-          ),
-          const SizedBox(height: 10),
-          CustomIconButton(
-            onTap: () {
-              navigateToPage(3);
-            },
             icon: Icons.reorder_outlined,
             //  text: "Gestion des ordres ",
             selectedIcon: selectedPage,
-            index: 3, // Index du bouton
+            index: 2, // Index du bouton
           ),
+           const SizedBox(height: 10),
+         
           const Spacer(),
           CustomIconButton(
             onTap: () {
@@ -128,8 +121,9 @@ class _HomeState extends State<Home> {
             icon: Icons.logout_outlined,
             //  text: "Déconnecter",
             selectedIcon: selectedPage,
-            index: 5, // Index du bouton
+            index: 3, // Index du bouton
           ),
+          const SizedBox(height: 10,)
         ],
       ),
     ),
@@ -142,9 +136,9 @@ class _HomeState extends State<Home> {
               children: const [
                 DashboardPage(),
                RoomView(),
-              CategoryView(),
+                OrderView(),
                 DashboardPage(),
-                DashboardPage(),
+
               ],
             ),
           ),

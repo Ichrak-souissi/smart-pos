@@ -1,7 +1,8 @@
-import 'package:pos/ingredient/models/ingredient.dart';
+import '../../ingredient/models/ingredient.dart';
+import '../../supplement/models/supplement.dart';
 
 class Item {
-    int id;
+  int id;
   String name;
   String description;
   double price;
@@ -11,9 +12,12 @@ class Item {
   int duration;
   int categoryId;
   DateTime createdAt;
-  List<Ingredient> ingredients; 
+  List<Ingredient> ingredients;
+  List<Supplement> supplements;
+  int? discount; 
 
   Item({
+    required this.id,
     required this.name,
     required this.description,
     required this.price,
@@ -23,28 +27,35 @@ class Item {
     required this.duration,
     required this.categoryId,
     required this.createdAt,
-    required this.ingredients, 
-    required this.id 
+    required this.ingredients,
+    required this.supplements,
+    this.discount,
   });
 
-  factory Item.fromJson(Map<String, dynamic> json) => Item(
-            id: json["id"],
-        name: json["name"],
-        description: json["description"],
-        price: json["price"].toDouble(),
-        imageUrl: json["imageUrl"],
-        calories: json["calories"],
-        isActive: json["isActive"],
-        duration: json["duration"],
-        categoryId: json["categoryId"],
-        createdAt: DateTime.parse(json["createdAt"]),
-        ingredients: (json["ingredients"] != null)
-            ? List<Ingredient>.from(json["ingredients"].map((x) => Ingredient.fromJson(x))) 
-            : [],
-      );
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      id: json["id"] ?? 0,
+      name: json["name"] ?? '',
+      description: json["description"] ?? '',
+      price: (json["price"] ?? 0).toDouble(),
+      imageUrl: json["imageUrl"] ?? '',
+      calories: json["calories"] ?? 0,
+      isActive: json["isActive"] ?? false,
+      duration: json["duration"] ?? 0,
+      categoryId: json["categoryId"] ?? 0,
+      createdAt: DateTime.parse(json["createdAt"] ?? ''),
+      ingredients: (json["ingredients"] != null)
+          ? List<Ingredient>.from(json["ingredients"].map((x) => Ingredient.fromJson(x)))
+          : [],
+      supplements: (json["supplements"] != null)
+          ? List<Supplement>.from(json["supplements"].map((x) => Supplement.fromJson(x)))
+          : [],
+      discount: json["discount"], 
+    );
+  }
 
   Map<String, dynamic> toJson() => {
-            "id": id,
+        "id": id,
         "name": name,
         "description": description,
         "price": price,
@@ -54,6 +65,8 @@ class Item {
         "duration": duration,
         "categoryId": categoryId,
         "createdAt": createdAt.toIso8601String(),
-        "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())), 
+        "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())),
+        "supplements": List<dynamic>.from(supplements.map((x) => x.toJson())),
+        "discount": discount, 
       };
 }

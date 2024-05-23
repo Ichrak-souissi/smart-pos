@@ -5,7 +5,7 @@ class NumberButton extends StatelessWidget {
   final int number;
   final Function onPressed;
 
-  const NumberButton({Key? key, required this.number, required this.onPressed}) : super(key: key);
+  const NumberButton({super.key, required this.number, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {

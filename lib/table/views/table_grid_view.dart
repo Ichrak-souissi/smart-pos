@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 
 class RoomView extends StatefulWidget {
-  const RoomView({Key? key}) : super(key: key);
+  const RoomView({super.key});
 
   @override
   State<RoomView> createState() => _RoomViewState();
