@@ -34,15 +34,7 @@ static const String addReservationEndpoint='/reservation/add';
     static const String addItemEndpoint = '/item/add';
 //Endpoints pour la gestions des orderItems
  static const String orderItemEndpoint='/orderItem';
-
-  
-  
-  
-  
-  
-  
-  
-  
+ static const String ordersEndpoint = '/orders';
   
   // URLs pour les endpoints liés aux tables
   static String getBaseUrl() => baseUrl;
@@ -79,5 +71,11 @@ static String getIngredientByItemIdUrl(String id) => '$baseUrl$ingredientEndpoin
 //Urls pour les endpoints des orderItems 
 static String getOrderItemUrl() => '$baseUrl$orderItemEndpoint';
 static String addOrderItemUrl ()=>'$baseUrl$orderItemEndpoint/add';
+//Urls pour les endpoints des order
+
+  static String getOrderUrl() => '$baseUrl$orderItemEndpoint';
+
+static String addOrderUrl ()=>'$baseUrl$ordersEndpoint/add';
+static String getOrdersByTableIdUrl(String tableId) => '$baseUrl$tableEndpoint/orders/$tableId';
 
 }

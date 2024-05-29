@@ -34,14 +34,14 @@ class CategoryController extends GetxController {
             .toList();
 
         categoryList.assignAll(categories);
-        isLoading.value = false; // Indiquer que le chargement est terminé
+        isLoading.value = false; 
         return categoryList;
       } else {
-        isLoading.value = false; // Indiquer que le chargement est terminé avec échec
+        isLoading.value = false; 
         return [];
       }
     } catch (e) {
-      isLoading.value = false; // Indiquer que le chargement est terminé avec échec
+      isLoading.value = false; 
       rethrow;
     }
   }

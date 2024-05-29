@@ -1,5 +1,3 @@
-import '../../ingredient/models/ingredient.dart';
-import '../../supplement/models/supplement.dart';
 
 class Item {
   int id;
@@ -12,8 +10,6 @@ class Item {
   int duration;
   int categoryId;
   DateTime createdAt;
-  List<Ingredient> ingredients;
-  List<Supplement> supplements;
   int? discount; 
 
   Item({
@@ -27,8 +23,6 @@ class Item {
     required this.duration,
     required this.categoryId,
     required this.createdAt,
-    required this.ingredients,
-    required this.supplements,
     this.discount,
   });
 
@@ -44,12 +38,7 @@ class Item {
       duration: json["duration"] ?? 0,
       categoryId: json["categoryId"] ?? 0,
       createdAt: DateTime.parse(json["createdAt"] ?? ''),
-      ingredients: (json["ingredients"] != null)
-          ? List<Ingredient>.from(json["ingredients"].map((x) => Ingredient.fromJson(x)))
-          : [],
-      supplements: (json["supplements"] != null)
-          ? List<Supplement>.from(json["supplements"].map((x) => Supplement.fromJson(x)))
-          : [],
+  
       discount: json["discount"], 
     );
   }
@@ -65,8 +54,6 @@ class Item {
         "duration": duration,
         "categoryId": categoryId,
         "createdAt": createdAt.toIso8601String(),
-        "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())),
-        "supplements": List<dynamic>.from(supplements.map((x) => x.toJson())),
         "discount": discount, 
       };
 }

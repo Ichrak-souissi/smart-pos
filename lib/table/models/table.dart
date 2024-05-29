@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:pos/order/models/order.dart';
+
 Table tableFromJson(String str) => Table.fromJson(json.decode(str));
 
 String tableToJson(Table data) => json.encode(data.toJson());
@@ -11,6 +13,8 @@ class Table {
   //bool reserved;
   int position;
   int roomId;
+    final List<Order> orders; // Liste des commandes associées à cette table
+
 
   Table({
     required this.id,
@@ -19,6 +23,7 @@ class Table {
     //required this.reserved,
     required this.position,
     required this.roomId, 
+    required this.orders 
   });
 factory Table.fromJson(Map<String, dynamic> json) {
   return Table(
@@ -28,6 +33,9 @@ factory Table.fromJson(Map<String, dynamic> json) {
     //reserved: json["reserved"] ?? false,
     position: json["position"] ?? 0, 
     roomId: json["roomId"] ?? 0,
+      orders: (json["orders"] != null)
+          ? List<Order>.from(json["orders"].map((x) => Order.fromJson(x)))
+          : [],
   );
 }
 
@@ -38,5 +46,7 @@ factory Table.fromJson(Map<String, dynamic> json) {
    // "reserved": reserved,
     "position": position,
     "roomId": roomId,
+            "orders": List<dynamic>.from(orders.map((x) => x.toJson())),
+
   };
 }

@@ -1,20 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
-import 'package:pos/item/controllers/item_controller.dart';
 import 'package:pos/item/models/item.dart';
-import 'package:pos/ingredient/models/ingredient.dart';
-import 'package:pos/supplement/controller/supplement_controller.dart';
-import 'package:pos/supplement/models/supplement.dart';
 
 class ItemView {
-  void show(BuildContext context, Item item, int quantity, Function(Item, int, List<Ingredient>, List<Supplement>, double) onItemSelected) {
-    RxInt selectedQuantity = quantity.obs;
-    List<int> selectedIngredientIds = [];
-    List<int> selectedSupplementIds = [];
-    List<Ingredient> ingredients = [];
-    List<Supplement> supplements = [];
+  void show(BuildContext context, Item item, int quantity, Function(Item, int, double) onItemSelected) {
     double totalItemPrice = item.discount != null ? item.price * (1 - item.discount! / 100) : item.price.toDouble();
+    var selectedQuantity = quantity.obs;
 
     showDialog(
       context: context,
@@ -26,7 +18,7 @@ class ItemView {
               child: Stack(
                 children: [
                   SizedBox(
-                    width: 600,
+                    width: 400,
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -62,11 +54,11 @@ class ItemView {
                                           height: 100,
                                           decoration: BoxDecoration(
                                             borderRadius: BorderRadius.circular(12),
-                                           // image: DecorationImage(
+                                            // image: DecorationImage(
                                             //  image: NetworkImage(item.imageUrl),
-                                             // fit: BoxFit.cover,
-                                            ),
-                                        //  ),
+                                            // fit: BoxFit.cover,
+                                          ),
+                                          //  ),
                                         ),
                                         if (item.discount != null)
                                           Positioned(
@@ -120,176 +112,74 @@ class ItemView {
                                   ],
                                 ),
                               ),
-                              const Divider(color: Colors.black),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Ingrédients:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    const Text(
-                                      'Choisissez les ingrédients',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    FutureBuilder<List<Ingredient>>(
-                                      future: ItemController().getIngredientsByItemId(item.id),
-                                      builder: (BuildContext context, AsyncSnapshot<List<Ingredient>> snapshot) {
-                                        if (snapshot.connectionState == ConnectionState.waiting) {
-                                          return const Center(child: CircularProgressIndicator());
-                                        } else if (snapshot.hasError) {
-                                          return const Text('Une erreur');
-                                        } else {
-                                          ingredients = snapshot.data ?? [];
-                                          return Column(
-                                            children: ingredients.map((ingredient) {
-                                              return CheckboxListTile(
-                                                title: Text(
-                                                  ingredient.name,
-                                                  style: const TextStyle(fontSize: 16),
-                                                ),
-                                                value: selectedIngredientIds.contains(ingredient.id),
-                                                onChanged: (newValue) {
-                                                  setState(() {
-                                                    if (newValue == true) {
-                                                      selectedIngredientIds.add(ingredient.id);
-                                                    } else {
-                                                      selectedIngredientIds.remove(ingredient.id);
-                                                    }
-                                                  });
-                                                },
-                                              );
-                                            }).toList(),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Expanded(
-                                child: Column(
-                                  children: [
-                                    const Text(
-                                      'Suppléments:',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    const Text(
-                                      'Choisissez les suppléments',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    FutureBuilder<List<Supplement>>(
-                                      future: SupplementController().getSuppelmentsByItemId(item.id),
-                                      builder: (BuildContext context, AsyncSnapshot<List<Supplement>> snapshot) {
-                                        if (snapshot.connectionState == ConnectionState.waiting) {
-                                          return const Center(child: CircularProgressIndicator());
-                                        } else if (snapshot.hasError) {
-                                          return const Text('Une erreur');
-                                        } else {
-                                          supplements = snapshot.data ?? [];
-                                          return Column(
-                                            children: supplements.map((supplement) {
-                                              return CheckboxListTile(
-                                                title: Row(
-                                                  children: [
-                                                    Text(
-                                                      supplement.name,
-                                                      style: const TextStyle(fontSize: 16),
-                                                    ),
-                                                    Text(
-                                                      ' (+${supplement.price.toStringAsFixed(2)}dt)',
-                                                      style: const TextStyle(fontSize: 12, color: Colors.blue),
-                                                    ),
-                                                  ],
-                                                ),
-                                                value: selectedSupplementIds.contains(supplement.id),
-                                                onChanged: (newValue) {
-                                                  setState(() {
-                                                    if (newValue == true) {
-                                                      selectedSupplementIds.add(supplement.id);
-                                                      totalItemPrice += supplement.price;
-                                                    } else {
-                                                      selectedSupplementIds.remove(supplement.id);
-                                                      totalItemPrice -= supplement.price;
-                                                    }
-                                                  });
-                                                },
-                                              );
-                                            }).toList(),
-                                          );
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              )
                             ],
                           ),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove, color: Colors.black),
-                                onPressed: () {
-                                  if (selectedQuantity.value > 1) {
-                                    selectedQuantity.value--;
-                                  }
-                                },
+                              Container(
+                                height: 25,
+                                width: 25,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: IconButton(
+                                    icon: const Icon(Icons.remove, color: Colors.white, size: 10),
+                                    onPressed: () {
+                                      if (selectedQuantity.value > 1) {
+                                        selectedQuantity.value--;
+                                      }
+                                    },
+                                  ),
+                                ),
                               ),
-                              Obx(() => Text(
-                                selectedQuantity.value.toString(),
-                                style: const TextStyle(fontSize: 16),
+                              Obx(() => Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Text(
+                                  selectedQuantity.value.toString(),
+                                  style: const TextStyle(fontSize: 16),
+                                ),
                               )),
-                              IconButton(
-                                icon: const Icon(Icons.add, color: Colors.black),
-                                onPressed: () {
-                                  selectedQuantity.value++;
-                                },
+                              Container(
+                                height: 25,
+                                width: 25,
+                                decoration: const BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: IconButton(
+                                    icon: const Icon(Icons.add, color: Colors.white, size: 10),
+                                    onPressed: () {
+                                      selectedQuantity.value++;
+                                    },
+                                  ),
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 10),
+                          const SizedBox(height: 15),
                           Center(
                             child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                        foregroundColor: Color.fromARGB(255, 221, 136, 9),
+                              backgroundColor: Color.fromARGB(255, 221, 136, 9),
+                              ),
                               onPressed: () {
-                                List<Ingredient> selectedIngredients = [];
-                                for (var id in selectedIngredientIds) {
-                                  Ingredient selectedIngredient = ingredients.firstWhere((ingredient) => ingredient.id == id);
-                                  selectedIngredients.add(selectedIngredient);
-                                }
-
-                                List<Supplement> selectedSupplements = [];
-                                for (var id in selectedSupplementIds) {
-                                  Supplement selectedSupplement = supplements.firstWhere((supplement) => supplement.id == id);
-                                  selectedSupplements.add(selectedSupplement);
-                                }
-                                onItemSelected(item, selectedQuantity.value, selectedIngredients, selectedSupplements, totalItemPrice);
+                                onItemSelected(item, selectedQuantity.value, totalItemPrice);
                                 Navigator.of(context).pop();
                               },
                               child: Text(
-                                'Commander pour ${totalItemPrice.toStringAsFixed(2) * quantity} dt ',
-                                style: const TextStyle(color: Colors.redAccent),
+                                'Commander  ',
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
                           ),
+                           const SizedBox(height: 15),
+
                         ],
                       ),
                     ),

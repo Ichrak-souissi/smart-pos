@@ -1,38 +1,25 @@
-import 'package:pos/ingredient/models/ingredient.dart';
-import 'package:pos/supplement/models/supplement.dart';
-
 class OrderItem {
-  int ?id;
-  int orderId ;
+  int? id;
   String name;
   double price;
   int quantity;
-  List<Ingredient> ingredients;
-  List<Supplement> supplements;
+  String note;
 
   OrderItem({
-     this.id,
+    this.id,
     required this.name,
     required this.price,
     required this.quantity,
-    required this.orderId,
-    required this.ingredients,
-    required this.supplements,
+    required this.note,
   });
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
     return OrderItem(
-      id: json["id"] ?? 0,
+      id: json["id"],
       name: json["name"] ?? '',
       price: (json["price"] ?? 0).toDouble(),
       quantity: json["quantity"] ?? 0,
-      orderId: json ["orderId"]?? 0,
-      ingredients: (json["ingredients"] != null)
-          ? List<Ingredient>.from(json["ingredients"].map((x) => Ingredient.fromJson(x)))
-          : [],
-      supplements: (json["supplements"] != null)
-          ? List<Supplement>.from(json["supplements"].map((x) => Supplement.fromJson(x)))
-          : [],
+      note: json["note"] ?? '',
     );
   }
 
@@ -41,9 +28,6 @@ class OrderItem {
         "name": name,
         "price": price,
         "quantity": quantity,
-        "orderId": orderId, 
-        "ingredients": List<dynamic>.from(ingredients.map((x) => x.toJson())),
-        "supplements": List<dynamic>.from(supplements.map((x) => x.toJson())),
+        "note": note,
       };
-
 }

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
+import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/widgets/order_widget.dart';
 
 class RoomView extends StatefulWidget {
-  const RoomView({super.key});
+  const RoomView({Key? key}) : super(key: key);
 
   @override
   State<RoomView> createState() => _RoomViewState();
@@ -14,6 +15,8 @@ class RoomView extends StatefulWidget {
 
 class _RoomViewState extends State<RoomView> {
   final RoomController roomController = Get.put(RoomController());
+  final OrderController orderController = Get.put(OrderController());
+
   int selectedRoomIndex = 0;
   var selectedTable; // Variable to track the selected table
 
@@ -21,6 +24,14 @@ class _RoomViewState extends State<RoomView> {
   void initState() {
     super.initState();
     _loadRoomTables();
+  }
+
+  void _loadOrdersByTableId(int tableId) async {
+    try {
+      await orderController.fetchOrdersByTableId(tableId.toString());
+    } catch (e) {
+      print('Error fetching orders by table id: $e');
+    }
   }
 
   void _loadRoomTables() async {
@@ -189,7 +200,7 @@ class _RoomViewState extends State<RoomView> {
                                 padding: const EdgeInsets.all(8.0),
                                 child: GridView.builder(
                                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 5,
+                                    crossAxisCount: 6,
                                     mainAxisSpacing: 40.0,
                                     crossAxisSpacing: 40.0,
                                     childAspectRatio: 0.7,
@@ -213,6 +224,8 @@ class _RoomViewState extends State<RoomView> {
                                           showDialog(
                                             context: context,
                                             builder: (BuildContext context) {
+                                              // Si la table est occupée, chargez les commandes associées
+                                              _loadOrdersByTableId(table.id); // Appel de la fonction pour charger les commandes
                                               return Dialog(child: OrderWidget(selectedTableId: table.id));
                                             },
                                           );
@@ -259,47 +272,86 @@ class _RoomViewState extends State<RoomView> {
                   ],
                 ),
               ),
-              if (selectedTable != null) // Show the details container if a table is selected
-                Expanded(
-                  flex: 1,
-                  child: Container(
-                    color: Colors.white,
-                    child: Stack(
+              if (selectedTable != null)
+  Expanded(
+    flex: 1,
+    child: Container(
+      color: Colors.white,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Détails de la table N°${selectedTable.id}',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Capacité: ${selectedTable.capacity}',
+                  style: TextStyle(fontSize: 16),
+                ),
+                Text(
+                  'État: ${selectedTable.active ? 'Occupé' : 'Disponible'}',
+                  style: TextStyle(fontSize: 16),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  'Commandes:',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                for (var order in orderController.orders)
+                  if (order.tableId == selectedTable.id)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Détails de la table N°${selectedTable.id}',
-                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                              ),
-                              SizedBox(height: 10),
-                              Text(
-                                'État: ${selectedTable.active ? 'Occupé' : 'Disponible'}',
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              // Add more details as needed
-                            ],
-                          ),
+                        Text(
+                          'Commande ID: ${order.id}',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        Positioned(
-                          top: 8,
-                          right: 8,
-                          child: IconButton(
-                            icon: Icon(Icons.close),
-                            onPressed: () {
-                              setState(() {
-                                selectedTable = null; // Clear the selected table
-                              });
-                            },
-                          ),
+                        Text(
+                          'Total: ${order.total}',
+                          style: TextStyle(fontSize: 16),
                         ),
+                        Text(
+                          'Statut: ${order.cooking}',
+                          style: TextStyle(fontSize: 16),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Articles de commande:',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        for (var item in order.orderItems)
+                          ListTile(
+                            title: Text('${item.name} (${item.quantity} x ${item.price} DH)'),
+                            subtitle: Text(item.note),
+                          ),
+                        SizedBox(height: 10),
                       ],
                     ),
-                  ),
-                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 8,
+            right: 8,
+            child: IconButton(
+              icon: Icon(Icons.close),
+              onPressed: () {
+                setState(() {
+                  selectedTable = null;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+
             ],
           ),
         ),
@@ -307,3 +359,4 @@ class _RoomViewState extends State<RoomView> {
     );
   }
 }
+

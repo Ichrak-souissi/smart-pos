@@ -4,12 +4,9 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
-import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/room/widgets/tab_content.dart';
-import 'package:pos/ingredient/models/ingredient.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/item/views/item_view.dart';
-import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class OrderWidget extends StatefulWidget {
@@ -63,8 +60,7 @@ class _OrderWidgetState extends State<OrderWidget> {
     return createdAt.isAfter(weekAgo);
   }
 
-  Map<Item, int> addToOrder(Item item, int quantity, List<Ingredient> selectedIngredients,
-      List<Supplement> selectedSupplements, double totalPrice) {
+  Map<Item, int> addToOrder(Item item, int quantity,  double totalPrice) {
     Item newItem = Item(
       id: item.id,
       name: item.name,
@@ -76,8 +72,6 @@ class _OrderWidgetState extends State<OrderWidget> {
       price: totalPrice,
       calories: item.calories,
       createdAt: item.createdAt,
-      ingredients: selectedIngredients,
-      supplements: selectedSupplements,
     );
 
     Map<Item, int> newOrderMap = Map.from(orderMap);

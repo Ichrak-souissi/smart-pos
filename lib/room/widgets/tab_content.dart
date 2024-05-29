@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
-import 'package:pos/ingredient/models/ingredient.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
+import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/table/controllers/table_controller.dart';
-import 'package:pos/supplement/models/supplement.dart';
 
 class TabContent extends StatefulWidget {
   final Map<Item, int> orderMap;
@@ -29,76 +28,98 @@ class _TabContentState extends State<TabContent> {
   int orderCounter = 1;
   final CounterController counterController = Get.put(CounterController());
   final TableController tableController = Get.put(TableController());
-  final OrderItemController orderItemController = Get.put(OrderItemController());
+  final OrderController orderController = Get.put(OrderController());
+
+  Map<Item, String> itemNotes = {}; 
 
   @override
   void initState() {
     super.initState();
-    TableController();
   }
 
-Future<void> _handleOrderSubmit() async {
-  try {
-    if (widget.orderMap.isEmpty) {
-      _showOrderAlert();
-    } else {
-      await addOrderItemFromMap(widget.orderMap);
-      await tableController.updateTable(widget.selectedTableId.toString());
+   List<OrderItem> getOrderItemsFromMap(Map<Item, int> orderMap) {
+    List<OrderItem> orderItems = [];
+     widget.orderMap.entries.forEach((entry) {
+            final item = entry.key;
+            final quantity = entry.value;
+            final totalPrice = item.price * quantity;
+            final note = itemNotes[item] ?? '';
+
+            final orderItem = OrderItem(
+              name: item.name,
+              quantity: quantity,
+              price: totalPrice,
+              note: note,
+            );
+                print('OrderItem: ${orderItem.name}, Quantity: ${orderItem.quantity}, Price: ${orderItem.price}, Note: ${orderItem.note}');
+
+                orderItems.add(orderItem);
+                    print ('$orderItems');
+
+
+
+    });
+
+    return orderItems;
+  }
+
+  void _handleOrderSubmit() async {
+    try {
+      if (widget.orderMap.isEmpty) {
+        _showOrderAlert();
+      } else {
+        if (widget.selectedTableId != null) {
+          await tableController.updateTable(widget.selectedTableId!);
+
+          List<OrderItem> orderItems = getOrderItemsFromMap(widget.orderMap);
+          Order order = Order(
+             tableId: int.parse(widget.selectedTableId!),
+            total: widget.calculateTotal(widget.orderMap),
+            orderItems: orderItems,
+            cooking: 'in progress', 
+              id:counterController.counter.value,
+
+          );
+        print('Objet Order créé: $order');
+         print('tableId: ${order.tableId}');
+        print('total: ${order.total}');
+        print('orderItems: ${order.orderItems}');
+        print('cooking: ${order.cooking}');
+        print('id: ${order.id}');
+
+          await orderController.addOrder(order);
+
+          setState(() {
+            widget.orderMap.clear();
+            widget.selectedTableId = null;
+          });
+        }
+      }
+    } catch (e) {
+      print('Erreur: $e');
     }
-  } catch (e) {
-    print("Error submitting order: $e");
   }
-}
-
-
-Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
-  for (final entry in orderMap.entries) {
-    final item = entry.key;
-    final quantity = entry.value;
-    final totalPrice = item.price * quantity;
-
-    final selectedIngredients = item.ingredients;
-     for (var ingredient in selectedIngredients) {
-        print(' - ${ingredient.name}');
-        print(' - ${ingredient.itemId}');
-        print(' - ${ingredient.active}');
-      }
-    final selectedSupplements = item.supplements;
- for (var supplement in selectedSupplements) {
-        print(' - ${supplement.name}');
-        print(' - ${supplement.itemId}');
-        print(' - ${supplement.price}');
-      }
-    final orderItem = OrderItem(
-      orderId: counterController.counter.value,
-      name: item.name,
-      quantity: quantity,
-      price: totalPrice,
-      ingredients: selectedIngredients,
-      supplements: selectedSupplements,
-    );
-    await orderItemController.addOrderItem(orderItem);
-  }
-}
-
 
   void _showOrderAlert() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Attention'),
-        content: Text('Veuillez sélectionner des produits pour passer une commande'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Ok'),
-          ),
-        ],
-      ),
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Attention'),
+          content: Text('Veuillez sélectionner des produits pour passer une commande'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Ok'),
+            ),
+          ],
+        );
+      },
     );
   }
 
-  
   @override
   Widget build(BuildContext context) {
     final RoomController _roomController = Get.put(RoomController());
@@ -107,7 +128,7 @@ Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
     return Expanded(
       child: Obx(() {
         if (_roomController.isLoading.value || tableController.isLoading.value) {
-          return const Center(
+          return Center(
             child: CircularProgressIndicator(),
           );
         } else {
@@ -169,86 +190,112 @@ Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
               Flexible(
                 child: widget.orderMap.isEmpty
                     ? ListView(
-                  children: [
-                    Text(
-                      'Aucun Produit ! Sélectionnez les produits pour passer une commande ',
-                      style: TextStyle(
-                        color: Colors.grey,
-                        fontSize: 16,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: 20),
-                  ],
-                )
-                    : ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    ...widget.orderMap.entries.map((entry) {
-                      final item = entry.key;
-                      final price = item.price;
-                      final quantity = entry.value;
-                      final totalPrice = price * quantity;
-                      final selectedIngredients = item.ingredients;
-                      print(selectedIngredients);
-                      final selectedSupplements = item.supplements;
-                      print(selectedSupplements);
-             
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          color: Colors.white,
-                          elevation: 1,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            side: const BorderSide(
-                              color: Colors.black12,
-                              width: 0.5,
+                        children: [
+                          Text(
+                            'Aucun Produit ! Sélectionnez les produits pour passer une commande ',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 16,
                             ),
+                            textAlign: TextAlign.center,
                           ),
-                          child: Stack(
-                            children: [
-                              ListTile(
-                                title: Text(
-                                  item.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontSize: 16),
+                          SizedBox(height: 20),
+                        ],
+                      )
+                    : ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        children: [
+                          ...widget.orderMap.entries.map((entry) {
+                            final item = entry.key;
+                            final price = item.price;
+                            final quantity = entry.value;
+                            final totalPrice = price * quantity;
+                            final note = itemNotes[item] ?? '';
+
+                            return Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Card(
+                                color: Colors.white,
+                                elevation: 1,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: const BorderSide(
+                                    color: Colors.black12,
+                                    width: 0.5,
+                                  ),
                                 ),
-                                subtitle: Text(
-                                  'Qte: $quantity',
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                trailing: Text(
-                                  '${(totalPrice).toStringAsFixed(2)} dt',
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              ),
-                              Positioned(
-                                top: 2,
-                                right: 2,
-                                child: MouseRegion(
-                                  cursor: SystemMouseCursors.click,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        widget.orderMap.remove(item);
-                                      });
-                                    },
-                                    child: const Icon(
-                                      Icons.close,
-                                      color: Colors.red,
-                                      size: 18,
-                                    ),
+                                child: ListTile(
+                                  title: Text(
+                                    item.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  subtitle: Text(
+                                    'Qte: $quantity',
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  trailing: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.end,
+                                    children: [
+                                      Text(
+                                        '${(totalPrice).toStringAsFixed(2)} dt',
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      SizedBox(height: 5,),
+                                      GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              String tempNote = note;
+                                              return AlertDialog(
+                                                title: Text(note.isEmpty ? 'Ajouter une note' : 'Modifier la note'),
+                                                content: TextField(
+                                                  onChanged: (value) {
+                                                    tempNote = value;
+                                                  },
+                                                  decoration: InputDecoration(
+                                                    hintText: 'Saisissez votre note',
+                                                  ),
+                                                  controller: TextEditingController(text: note),
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text('Annuler'),
+                                                  ),
+                                                  TextButton(
+                                                    onPressed: () {
+                                                      setState(() {
+                                                        itemNotes[item] = tempNote;
+                                                      });
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text('Ajouter'),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: Text(
+                                          note.isEmpty ? 'ajouter note' : 'note',
+                                          style: TextStyle(
+                                            color: Color.fromARGB(255, 14, 106, 182),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
-                ),
+                            );
+                          }),
+                        ],
+                      ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -299,12 +346,6 @@ Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
                                 _showOrderAlert();
                               } else {
                                 _handleOrderSubmit();
-                                setState(() {
-                                  widget.orderMap.clear();
-                                  widget.selectedTableId = null;
-                                  counterController.increment(); 
-                               
-                                });
                               }
                             },
                             style: ElevatedButton.styleFrom(
@@ -337,6 +378,7 @@ Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
                         setState(() {
                           widget.orderMap.clear();
                           widget.selectedTableId = null;
+                          itemNotes.clear(); // Réinitialiser les notes lors de la suppression
                         });
                       },
                       style: ElevatedButton.styleFrom(
@@ -358,7 +400,7 @@ Future<void> addOrderItemFromMap(Map<Item, int> orderMap) async {
                           _showOrderAlert();
                         } else {
                           setState(() {
-                            counterController.increment(); 
+                            counterController.increment();
                           });
                         }
                       },
