@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/item/models/item.dart';
+import 'package:pos/supplement/controllers/supplement_controller.dart';
+import 'package:pos/supplement/models/supplement.dart';
 
 class ItemView {
-  void show(BuildContext context, Item item, int quantity, Function(Item, int, double) onItemSelected) {
-    double totalItemPrice = item.discount != null ? item.price * (1 - item.discount! / 100) : item.price.toDouble();
-    var selectedQuantity = quantity.obs;
+  void show(BuildContext context, Item item, int quantity,
+      Function(Item, int, List<Supplement>, double) onItemSelected) {
+    RxInt selectedQuantity = quantity.obs;
+    List<int> selectedSupplementIds = [];
+    List<Supplement> supplements = [];
+    double totalItemPrice = item.price.toDouble();
 
     showDialog(
       context: context,
@@ -18,7 +23,7 @@ class ItemView {
               child: Stack(
                 children: [
                   SizedBox(
-                    width: 400,
+                    width: 900,
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -47,40 +52,16 @@ class ItemView {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.center,
                                   children: [
-                                    Stack(
-                                      children: [
-                                        Container(
-                                          width: 100,
-                                          height: 100,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(12),
-                                            // image: DecorationImage(
-                                            //  image: NetworkImage(item.imageUrl),
-                                            // fit: BoxFit.cover,
-                                          ),
-                                          //  ),
-                                        ),
-                                        if (item.discount != null)
-                                          Positioned(
-                                            top: 0,
-                                            right: 0,
-                                            child: Container(
-                                              padding: const EdgeInsets.all(4),
-                                              decoration: BoxDecoration(
-                                                color: Colors.yellowAccent,
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(
-                                                '-${item.discount}%',
-                                                style: const TextStyle(
-                                                  color: Colors.black,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontStyle: FontStyle.italic
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                      ],
+                                    Container(
+                                      width: 100,
+                                      height: 100,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(12),
+                                        // image: DecorationImage(
+                                        //   image: NetworkImage(item.imageUrl),
+                                        //  fit: BoxFit.cover,
+                                        //  ),
+                                      ),
                                     ),
                                     const SizedBox(height: 10),
                                     Center(
@@ -112,74 +93,148 @@ class ItemView {
                                   ],
                                 ),
                               ),
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    const Text(
+                                      'Suppléments:',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    const Text(
+                                      'Choisissez les suppléments',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    FutureBuilder<List<Supplement>>(
+                                      future: SupplementController()
+                                          .getSupplementsByItemId(item.id),
+                                      builder: (BuildContext context,
+                                          AsyncSnapshot<List<Supplement>>
+                                              snapshot) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
+                                          return const Center(
+                                              child:
+                                                  CircularProgressIndicator());
+                                        } else if (snapshot.hasError) {
+                                          print(
+                                              'Erreur lors du chargement des suppléments: ${snapshot.error}');
+                                          return const Text(
+                                              'Une erreur est survenue lors du chargement des suppléments.');
+                                        } else {
+                                          supplements = snapshot.data ?? [];
+                                          print(
+                                              'Liste des suppléments: $supplements');
+
+                                          return Wrap(
+                                            spacing: 10,
+                                            runSpacing: 10,
+                                            children:
+                                                supplements.map((supplement) {
+                                              return CheckboxListTile(
+                                                title: Row(
+                                                  children: [
+                                                    Text(
+                                                      supplement.name,
+                                                      style: const TextStyle(
+                                                          fontSize: 16),
+                                                    ),
+                                                    Text(
+                                                      ' + ${supplement.price.toStringAsFixed(2)} dt',
+                                                      style: const TextStyle(
+                                                          fontSize: 16,
+                                                          color: Colors.blue),
+                                                    ),
+                                                  ],
+                                                ),
+                                                value: selectedSupplementIds
+                                                    .contains(supplement.id),
+                                                onChanged: (newValue) {
+                                                  setState(() {
+                                                    if (newValue == true) {
+                                                      selectedSupplementIds
+                                                          .add(supplement.id);
+                                                      totalItemPrice +=
+                                                          supplement.price
+                                                              .toDouble();
+                                                    } else {
+                                                      selectedSupplementIds
+                                                          .remove(
+                                                              supplement.id);
+                                                      totalItemPrice -=
+                                                          supplement.price
+                                                              .toDouble();
+                                                    }
+                                                  });
+                                                },
+                                              );
+                                            }).toList(),
+                                          );
+                                        }
+                                      },
+                                    )
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 10),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Container(
-                                height: 25,
-                                width: 25,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: IconButton(
-                                    icon: const Icon(Icons.remove, color: Colors.white, size: 10),
-                                    onPressed: () {
-                                      if (selectedQuantity.value > 1) {
-                                        selectedQuantity.value--;
-                                      }
-                                    },
-                                  ),
-                                ),
+                              IconButton(
+                                icon: const Icon(Icons.remove,
+                                    color: Colors.black),
+                                onPressed: () {
+                                  if (selectedQuantity.value > 1) {
+                                    selectedQuantity.value--;
+                                  }
+                                },
                               ),
-                              Obx(() => Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                child: Text(
-                                  selectedQuantity.value.toString(),
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                              )),
-                              Container(
-                                height: 25,
-                                width: 25,
-                                decoration: const BoxDecoration(
-                                  color: Colors.black,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(
-                                  child: IconButton(
-                                    icon: const Icon(Icons.add, color: Colors.white, size: 10),
-                                    onPressed: () {
-                                      selectedQuantity.value++;
-                                    },
-                                  ),
-                                ),
+                              Obx(() => Text(
+                                    selectedQuantity.value.toString(),
+                                    style: const TextStyle(fontSize: 16),
+                                  )),
+                              IconButton(
+                                icon:
+                                    const Icon(Icons.add, color: Colors.black),
+                                onPressed: () {
+                                  selectedQuantity.value++;
+                                },
                               ),
                             ],
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 10),
                           Center(
                             child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                        foregroundColor: Color.fromARGB(255, 221, 136, 9),
-                              backgroundColor: Color.fromARGB(255, 221, 136, 9),
-                              ),
                               onPressed: () {
-                                onItemSelected(item, selectedQuantity.value, totalItemPrice);
+                                List<Supplement> selectedSupplements = [];
+                                for (var id in selectedSupplementIds) {
+                                  Supplement selectedSupplement =
+                                      supplements.firstWhere(
+                                          (supplement) => supplement.id == id);
+                                  selectedSupplements.add(selectedSupplement);
+                                }
+                                print(
+                                    'Suppléments sélectionnés: $selectedSupplements');
+
+                                onItemSelected(item, selectedQuantity.value,
+                                    selectedSupplements, totalItemPrice);
                                 Navigator.of(context).pop();
                               },
                               child: Text(
-                                'Commander  ',
-                                style: const TextStyle(color: Colors.white),
+                                'Commander pour ${(totalItemPrice * selectedQuantity.value).toStringAsFixed(2)} dt',
+                                style: TextStyle(color: Colors.redAccent),
                               ),
                             ),
                           ),
-                           const SizedBox(height: 15),
-
                         ],
                       ),
                     ),
@@ -190,7 +245,7 @@ class ItemView {
                     child: IconButton(
                       icon: const Icon(Icons.close),
                       onPressed: () {
-                        Navigator.of(context).pop();
+                        Navigator.of(context).pop(totalItemPrice);
                       },
                     ),
                   ),

@@ -1,11 +1,12 @@
 import 'package:pos/order-item/models/order-item.dart';
 
 class Order {
-  late int id;
-  late int tableId;
-  late double total;
-  late List<OrderItem> orderItems;
-  late String cooking;
+  late final int id;
+  late final int tableId;
+  late final double total;
+  late final List<OrderItem> orderItems;
+  late final String cooking;
+  late final DateTime createdAt;
 
   Order({
     required this.id,
@@ -13,6 +14,7 @@ class Order {
     required this.total,
     required this.orderItems,
     required this.cooking,
+    required this.createdAt,
   });
 
   factory Order.fromJson(Map<String, dynamic>? json) {
@@ -21,9 +23,11 @@ class Order {
       tableId: json?["tableId"] ?? 0,
       total: (json?["total"] ?? 0).toDouble(),
       orderItems: (json?["orderItems"] != null)
-          ? List<OrderItem>.from(json?["orderItems"].map((x) => OrderItem.fromJson(x)) ?? [])
+          ? List<OrderItem>.from(
+              json?["orderItems"].map((x) => OrderItem.fromJson(x)) ?? [])
           : [],
       cooking: json?["cooking"] ?? 'inProgress',
+      createdAt: DateTime.parse(json?["createdAt"] ?? ''),
     );
   }
 
@@ -33,5 +37,6 @@ class Order {
         "total": total,
         "orderItems": List<dynamic>.from(orderItems.map((x) => x.toJson())),
         "cooking": cooking,
+        "createdAt": createdAt.toIso8601String(),
       };
 }

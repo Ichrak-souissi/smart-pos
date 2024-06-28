@@ -15,10 +15,9 @@ class CategoryController extends GetxController {
 
   final ClientDio _clientDio = ClientDio();
 
-
   Future<List<Category>> getCategoryList() async {
     try {
-      isLoading.value = true; 
+      isLoading.value = true;
       final response = await _clientDio.dio.get(
         Constants.getCategoryUrl(),
         options: Options(
@@ -34,21 +33,29 @@ class CategoryController extends GetxController {
             .toList();
 
         categoryList.assignAll(categories);
-        isLoading.value = false; 
+        isLoading.value = false;
         return categoryList;
       } else {
-        isLoading.value = false; 
+        isLoading.value = false;
         return [];
       }
     } catch (e) {
-      isLoading.value = false; 
+      isLoading.value = false;
       rethrow;
+    }
+  }
+
+  String getCategoryNameById(int id) {
+    try {
+      return categoryList.firstWhere((category) => category.id == id).name;
+    } catch (e) {
+      return 'Inconnu';
     }
   }
 
   Future<List<Item>> getItemsByCategoryId(int categoryId) async {
     try {
-      isLoading.value = true; 
+      isLoading.value = true;
       final response = await _clientDio.dio.get(
         Constants.getItemsByCategoryIdUrl(categoryId.toString()),
         options: Options(
@@ -66,10 +73,10 @@ class CategoryController extends GetxController {
 
         originalItems = List.from(items);
         categoryItems.assignAll(items);
-        isLoading.value = false; 
+        isLoading.value = false;
         return items;
       } else {
-        isLoading.value = false; 
+        isLoading.value = false;
         return [];
       }
     } catch (e) {
@@ -77,16 +84,17 @@ class CategoryController extends GetxController {
       rethrow;
     }
   }
+
   void searchItemsByName(String query) {
     if (query.isEmpty) {
-
       categoryItems.assignAll(originalItems);
     } else {
-
-      categoryItems.assignAll(originalItems.where((item) => item.name.toLowerCase().contains(query.toLowerCase())));
+      categoryItems.assignAll(originalItems.where(
+          (item) => item.name.toLowerCase().contains(query.toLowerCase())));
     }
   }
-   Future<void> addNewItem(Item newItem) async {
+
+  Future<void> addNewItem(Item newItem) async {
     try {
       final response = await _clientDio.dio.post(
         Constants.addItemUrl(),
@@ -98,13 +106,11 @@ class CategoryController extends GetxController {
         ),
       );
       if (response.statusCode == 201) {
-
         categoryItems.add(newItem);
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
   }
+
   void filterByPrice() {
     categoryItems.sort((a, b) => a.price.compareTo(b.price));
     update();
@@ -119,5 +125,4 @@ class CategoryController extends GetxController {
     categoryItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     update();
   }
-
 }

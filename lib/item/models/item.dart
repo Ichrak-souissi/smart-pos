@@ -1,3 +1,4 @@
+import 'package:pos/supplement/models/supplement.dart';
 
 class Item {
   int id;
@@ -10,7 +11,8 @@ class Item {
   int duration;
   int categoryId;
   DateTime createdAt;
-  int? discount; 
+  int? discount;
+  List<Supplement>? supplements;
 
   Item({
     required this.id,
@@ -24,6 +26,7 @@ class Item {
     required this.categoryId,
     required this.createdAt,
     this.discount,
+    this.supplements,
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -38,8 +41,10 @@ class Item {
       duration: json["duration"] ?? 0,
       categoryId: json["categoryId"] ?? 0,
       createdAt: DateTime.parse(json["createdAt"] ?? ''),
-  
-      discount: json["discount"], 
+      discount: json["discount"],
+      supplements: (json["supplements"] as List<dynamic>?)
+          ?.map((supplementJson) => Supplement.fromJson(supplementJson))
+          .toList(),
     );
   }
 
@@ -54,6 +59,8 @@ class Item {
         "duration": duration,
         "categoryId": categoryId,
         "createdAt": createdAt.toIso8601String(),
-        "discount": discount, 
+        "discount": discount,
+        "supplements":
+            supplements?.map((supplement) => supplement.toJson()).toList(),
       };
 }

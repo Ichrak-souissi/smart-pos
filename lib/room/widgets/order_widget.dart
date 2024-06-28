@@ -7,6 +7,7 @@ import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/room/widgets/tab_content.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/item/views/item_view.dart';
+import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class OrderWidget extends StatefulWidget {
@@ -16,8 +17,6 @@ class OrderWidget extends StatefulWidget {
   @override
   State<OrderWidget> createState() => _OrderWidgetState();
 }
-
-
 
 class _OrderWidgetState extends State<OrderWidget> {
   final CategoryController categoryController = Get.put(CategoryController());
@@ -38,7 +37,6 @@ class _OrderWidgetState extends State<OrderWidget> {
     return total;
   }
 
-
   @override
   void initState() {
     super.initState();
@@ -48,7 +46,8 @@ class _OrderWidgetState extends State<OrderWidget> {
   void _loadCategoryItems() async {
     await categoryController.getCategoryList();
     if (categoryController.categoryList.isNotEmpty) {
-      await categoryController.getItemsByCategoryId(categoryController.categoryList[0].id);
+      await categoryController
+          .getItemsByCategoryId(categoryController.categoryList[0].id);
       setState(() {
         selectedCardIndex = 0;
       });
@@ -60,7 +59,12 @@ class _OrderWidgetState extends State<OrderWidget> {
     return createdAt.isAfter(weekAgo);
   }
 
-  Map<Item, int> addToOrder(Item item, int quantity,  double totalPrice) {
+  Map<Item, int> addToOrder(Item item, int quantity,
+      List<Supplement> selectedSupplements, double total) {
+    double supplementsTotal = selectedSupplements.fold(
+        0, (sum, supplement) => sum + supplement.price);
+    double totalPrice = (item.price + supplementsTotal) * quantity;
+
     Item newItem = Item(
       id: item.id,
       name: item.name,
@@ -69,10 +73,13 @@ class _OrderWidgetState extends State<OrderWidget> {
       duration: item.duration,
       imageUrl: item.imageUrl,
       discount: item.discount,
-      price: totalPrice,
+      price: item.price + supplementsTotal,
       calories: item.calories,
       createdAt: item.createdAt,
+      supplements: selectedSupplements,
     );
+
+    print('Selected supplements: $selectedSupplements');
 
     Map<Item, int> newOrderMap = Map.from(orderMap);
 
@@ -96,6 +103,7 @@ class _OrderWidgetState extends State<OrderWidget> {
     int crossAxisCount = (width / 180).floor();
     return crossAxisCount > 0 ? crossAxisCount : 1;
   }
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
@@ -119,7 +127,8 @@ class _OrderWidgetState extends State<OrderWidget> {
                         children: [
                           const Text(
                             'Bienvenue',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 22),
                           ),
                           const SizedBox(width: 16),
                           Flexible(
@@ -136,9 +145,11 @@ class _OrderWidgetState extends State<OrderWidget> {
                                       padding: const EdgeInsets.all(8.0),
                                       child: GestureDetector(
                                         onTap: () {
-                                          final String query = _searchController.text.trim();
+                                          final String query =
+                                              _searchController.text.trim();
                                           setState(() {
-                                            categoryController.searchItemsByName(query);
+                                            categoryController
+                                                .searchItemsByName(query);
                                           });
                                         },
                                         child: ConstrainedBox(
@@ -160,7 +171,9 @@ class _OrderWidgetState extends State<OrderWidget> {
                                               ],
                                             ),
                                             child: const Center(
-                                              child: Icon(Icons.search, color: Colors.white, size: 20),
+                                              child: Icon(Icons.search,
+                                                  color: Colors.white,
+                                                  size: 20),
                                             ),
                                           ),
                                         ),
@@ -172,12 +185,14 @@ class _OrderWidgetState extends State<OrderWidget> {
                                         decoration: const InputDecoration(
                                           hintText: 'Rechercher',
                                           border: InputBorder.none,
-                                          contentPadding: EdgeInsets.symmetric(vertical: 10),
+                                          contentPadding: EdgeInsets.symmetric(
+                                              vertical: 10),
                                         ),
                                         onChanged: (value) {
                                           final String query = value.trim();
                                           setState(() {
-                                            categoryController.searchItemsByName(query);
+                                            categoryController
+                                                .searchItemsByName(query);
                                           });
                                         },
                                       ),
@@ -198,7 +213,8 @@ class _OrderWidgetState extends State<OrderWidget> {
                                 color: Colors.black38,
                                 size: 20,
                               ),
-                              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                              itemBuilder: (BuildContext context) =>
+                                  <PopupMenuEntry<String>>[
                                 const PopupMenuItem<String>(
                                   value: 'price',
                                   child: Text('Filtrer par prix'),
@@ -235,7 +251,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                       padding: const EdgeInsets.all(8.0),
                       child: TabBar(
                         isScrollable: true,
-                        indicatorColor:Colors.redAccent,
+                        indicatorColor: Colors.redAccent,
                         labelColor: Colors.redAccent,
                         tabs: List.generate(
                           categoryController.categoryList.length,
@@ -267,28 +283,34 @@ class _OrderWidgetState extends State<OrderWidget> {
                                 child: LayoutBuilder(
                                   builder: (context, constraints) {
                                     int crossAxisCount =
-                                        _calculateCrossAxisCount(constraints.maxWidth);
+                                        _calculateCrossAxisCount(
+                                            constraints.maxWidth);
                                     return GridView.builder(
                                       shrinkWrap: true,
-                                      physics: const AlwaysScrollableScrollPhysics(),
-                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      physics:
+                                          const AlwaysScrollableScrollPhysics(),
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: crossAxisCount,
                                         mainAxisSpacing: 20.0,
                                         crossAxisSpacing: 20.0,
                                         childAspectRatio: 0.8,
                                       ),
-                                      itemCount: categoryController.categoryItems.length,
+                                      itemCount: categoryController
+                                          .categoryItems.length,
                                       itemBuilder: (context, index) {
-                                        final item =
-                                            categoryController.categoryItems[index];
+                                        final item = categoryController
+                                            .categoryItems[index];
                                         final isNew = isNewItem(item.createdAt);
                                         return Stack(
                                           children: [
                                             Container(
                                               decoration: BoxDecoration(
-                                                borderRadius: BorderRadius.circular(12),
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
                                                 border: Border.all(
-                                                    color: Colors.grey.shade200, width: 1),
+                                                    color: Colors.grey.shade200,
+                                                    width: 1),
                                                 color: Colors.white,
                                               ),
                                               child: Center(
@@ -298,49 +320,63 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                     Expanded(
                                                       child: Padding(
                                                         padding:
-                                                            const EdgeInsets.all(5.0),
+                                                            const EdgeInsets
+                                                                .all(5.0),
                                                         child: Container(
                                                           width: 150,
                                                           height: 95,
-                                                          decoration: BoxDecoration(
-                                                            shape: BoxShape.rectangle,
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            shape: BoxShape
+                                                                .rectangle,
                                                             borderRadius:
-                                                                BorderRadius.circular(10),
-                                                            //image: DecorationImage(
-                                                            //  image: NetworkImage(item.imageUrl),
-                                                            // fit: BoxFit.cover,
-                                                            //),
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10),
+                                                            //  image:
+                                                            //      DecorationImage(
+                                                            //   image: NetworkImage(
+                                                            //      item.imageUrl),
+                                                            //  fit: BoxFit.cover,
+                                                            //  ),
                                                           ),
                                                         ),
                                                       ),
                                                     ),
                                                     Padding(
                                                       padding:
-                                                          const EdgeInsets.all(5.0),
+                                                          const EdgeInsets.all(
+                                                              5.0),
                                                       child: Text(
                                                         item.name,
                                                         style: const TextStyle(
-                                                          fontWeight: FontWeight.bold,
+                                                          fontWeight:
+                                                              FontWeight.bold,
                                                           fontSize: 17,
                                                         ),
-                                                        overflow:
-                                                            TextOverflow.ellipsis,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                       ),
                                                     ),
                                                     Row(
                                                       children: [
                                                         const Padding(
-                                                          padding: EdgeInsets.only(
-                                                              left: 10, right: 5),
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                                  left: 10,
+                                                                  right: 5),
                                                           child: Icon(
-                                                            Icons.whatshot_sharp,
-                                                            color: Colors.orange,
+                                                            Icons
+                                                                .whatshot_sharp,
+                                                            color:
+                                                                Colors.orange,
                                                             size: 15,
                                                           ),
                                                         ),
                                                         Text(
                                                           '${item.calories.toString()} calories',
-                                                          style: const TextStyle(
+                                                          style:
+                                                              const TextStyle(
                                                             color: Colors.grey,
                                                             fontSize: 14,
                                                           ),
@@ -349,17 +385,22 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                     ),
                                                     Row(
                                                       mainAxisAlignment:
-                                                          MainAxisAlignment.spaceBetween,
+                                                          MainAxisAlignment
+                                                              .spaceBetween,
                                                       children: [
                                                         Padding(
                                                           padding:
-                                                              const EdgeInsets.all(10),
+                                                              const EdgeInsets
+                                                                  .all(10),
                                                           child: Text(
                                                             '${item.price.toStringAsFixed(2)} dt',
                                                             style: TextStyle(
-                                                              fontWeight: FontWeight.bold,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
                                                               fontSize: 14,
-                                                              color: Colors.grey.shade500,
+                                                              color: Colors.grey
+                                                                  .shade500,
                                                             ),
                                                           ),
                                                         ),
@@ -374,19 +415,25 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                           },
                                                           child: Padding(
                                                             padding:
-                                                                const EdgeInsets.all(10),
+                                                                const EdgeInsets
+                                                                    .all(10),
                                                             child: Container(
                                                               width: 25,
                                                               height: 25,
-                                                              decoration: BoxDecoration(
-                                                                shape: BoxShape.circle,
-                                                                color: AppTheme.lightTheme
+                                                              decoration:
+                                                                  BoxDecoration(
+                                                                shape: BoxShape
+                                                                    .circle,
+                                                                color: AppTheme
+                                                                    .lightTheme
                                                                     .primaryColor,
                                                               ),
-                                                              child: const Center(
+                                                              child:
+                                                                  const Center(
                                                                 child: Icon(
                                                                   Icons.add,
-                                                                  color: Colors.white,
+                                                                  color: Colors
+                                                                      .white,
                                                                 ),
                                                               ),
                                                             ),
@@ -403,26 +450,33 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                 top: 0,
                                                 left: 0,
                                                 child: Container(
-                                                  padding: const EdgeInsets.symmetric(
-                                                      horizontal: 5, vertical: 2),
-                                                  decoration: const BoxDecoration(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 5,
+                                                      vertical: 2),
+                                                  decoration:
+                                                      const BoxDecoration(
                                                     color: Colors.red,
-                                                    borderRadius: BorderRadius.only(
-                                                      topLeft: Radius.circular(12),
-                                                      bottomRight: Radius.circular(8),
+                                                    borderRadius:
+                                                        BorderRadius.only(
+                                                      topLeft:
+                                                          Radius.circular(12),
+                                                      bottomRight:
+                                                          Radius.circular(8),
                                                     ),
                                                   ),
                                                   child: const Text(
                                                     'New',
                                                     style: TextStyle(
-                                                        color: Colors.white, fontSize: 10),
+                                                        color: Colors.white,
+                                                        fontSize: 10),
                                                   ),
                                                 ),
                                               ),
-                                            if (item.discount != null) 
+                                            if (item.discount != null)
                                               Positioned(
                                                 top: 5,
-                                                right: 5, 
+                                                right: 5,
                                                 child: Container(
                                                   width: 33,
                                                   height: 33,
@@ -433,7 +487,13 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                   child: Center(
                                                     child: Text(
                                                       '-${item.discount.toString()}%',
-                                                      style: TextStyle(color: Colors.black, fontStyle: FontStyle.italic, fontWeight: FontWeight.bold, fontSize: 13),
+                                                      style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontStyle:
+                                                              FontStyle.italic,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 13),
                                                     ),
                                                   ),
                                                 ),
@@ -453,26 +513,28 @@ class _OrderWidgetState extends State<OrderWidget> {
                   ],
                 ),
               ),
-const SizedBox(width: 10),
+              const SizedBox(width: 10),
               Flexible(
                 flex: 4,
                 fit: FlexFit.tight,
                 child: Container(
-        color: Colors.white,
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SizedBox(height: 20,),
-             TabContent(
-              orderMap: orderMap,
-              calculateTotal: calculateTotal,
-               selectedTableId: widget.selectedTableId.toString() ,
-            ),
-          ],
-        ),
-      ),
-              ),              
+                  color: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                      ),
+                      TabContent(
+                        orderMap: orderMap,
+                        calculateTotal: calculateTotal,
+                        selectedTableId: widget.selectedTableId.toString(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),

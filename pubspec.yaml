@@ -2,12 +2,12 @@ name: pos
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.2.0 <4.0.0'
+  sdk: ">=3.2.0 <4.0.0"
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -19,12 +19,11 @@ dependencies:
   flutter:
     sdk: flutter
 
-
   cupertino_icons: ^1.0.2
   get: ^4.6.6
   logger: ^2.0.2+1
   dio: ^5.4.1
-  custom_pin_screen: ^0.5.0
+  custom_pin_screen: ^1.0.1
   iconsax: ^0.0.8
   cached_network_image: ^3.3.1
   equatable: ^2.0.5
@@ -43,7 +42,6 @@ dependencies:
   flutter_dropdown: ^1.0.1+hotfix.1
   custom_calender_picker: ^0.1.1
   full_calender: ^1.2.12
-  table_calendar: ^3.1.1
   flutter_datetime_picker: ^1.5.1
   flutter_picker: ^2.1.0
 
@@ -52,22 +50,22 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^4.0.0
-  
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
 
   assets:
+    - assets/images/user.png
+    - assets/images/logo.png
     - assets/images/image_panier.png
     - assets/images/delivery.png
-
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
