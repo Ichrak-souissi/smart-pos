@@ -12,7 +12,10 @@ import 'package:pos/table/controllers/table_controller.dart';
 
 class OrderWidget extends StatefulWidget {
   final int selectedTableId;
-  const OrderWidget({super.key, required this.selectedTableId});
+  const OrderWidget({
+    super.key,
+    required this.selectedTableId,
+  });
 
   @override
   State<OrderWidget> createState() => _OrderWidgetState();
@@ -20,6 +23,7 @@ class OrderWidget extends StatefulWidget {
 
 class _OrderWidgetState extends State<OrderWidget> {
   final CategoryController categoryController = Get.put(CategoryController());
+
   final TableController tableController = Get.put(TableController());
 
   int selectedCardIndex = 0;
@@ -39,8 +43,12 @@ class _OrderWidgetState extends State<OrderWidget> {
 
   @override
   void initState() {
+    tableController.initialized;
     super.initState();
+    categoryController.getItemsByCategoryId;
     _loadCategoryItems();
+
+    tableController.initialized;
   }
 
   void _loadCategoryItems() async {
@@ -91,6 +99,7 @@ class _OrderWidgetState extends State<OrderWidget> {
     } else {
       newOrderMap[newItem] = quantity;
     }
+    tableController.calculateTableOccupancy();
 
     setState(() {
       orderMap = newOrderMap;

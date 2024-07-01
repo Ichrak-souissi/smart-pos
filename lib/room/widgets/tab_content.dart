@@ -29,6 +29,13 @@ class _TabContentState extends State<TabContent> {
   final CounterController counterController = Get.put(CounterController());
   final TableController tableController = Get.find();
   final OrderController orderController = Get.find();
+  @override
+  void initState() {
+    super.initState();
+
+    orderController.orders;
+    tableController.initialized;
+  }
 
   Map<Item, String> itemNotes = {};
 
@@ -80,7 +87,6 @@ class _TabContentState extends State<TabContent> {
           orderItems: orderItems,
           cooking: 'in progress',
           id: counterController.counter.value,
-          createdAt: DateTime.now(),
         );
 
         print('Order Details:');

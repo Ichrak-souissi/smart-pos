@@ -61,6 +61,8 @@ class OrderController extends GetxController {
             .map((order) => Order.fromJson(order))
             .toList();
         orders.assignAll(orderList);
+        orders.refresh();
+
         print('All orders: $orderList');
       } else {
         throw Exception(
@@ -82,6 +84,8 @@ class OrderController extends GetxController {
         data: order.toJson(),
       );
       if (response.statusCode == 201) {
+        orders.add(Order.fromJson(response.data));
+        orders.refresh();
         return Order.fromJson(response.data);
       } else {
         throw Exception(

@@ -31,6 +31,11 @@ class _RoomViewState extends State<RoomView> {
   void initState() {
     super.initState();
     _loadRoomTables();
+    orderController.orders;
+
+    orderItemController.mostOrderedItems;
+    orderItemController.orderItems;
+    orderController.getTotalOrdersCount();
   }
 
   Future<void> _loadOrdersAndItemsByTableId(int tableId) async {

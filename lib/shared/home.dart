@@ -5,7 +5,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/views/pin_screen.dart';
-import 'package:pos/order/views/order_view.dart';
 import 'package:pos/room/views/room_view.dart';
 import 'package:pos/shared/dashboard.dart';
 import 'package:pos/shared/icon_buttom.dart';
@@ -135,7 +134,6 @@ class _HomeState extends State<Home> {
               children: [
                 DashboardPage(),
                 RoomView(),
-                OrderView(),
                 DashboardPage(),
               ],
             ),

@@ -6,7 +6,6 @@ class Order {
   late final double total;
   late final List<OrderItem> orderItems;
   late final String cooking;
-  late final DateTime createdAt;
 
   Order({
     required this.id,
@@ -14,7 +13,6 @@ class Order {
     required this.total,
     required this.orderItems,
     required this.cooking,
-    required this.createdAt,
   });
 
   factory Order.fromJson(Map<String, dynamic>? json) {
@@ -27,7 +25,6 @@ class Order {
               json?["orderItems"].map((x) => OrderItem.fromJson(x)) ?? [])
           : [],
       cooking: json?["cooking"] ?? 'inProgress',
-      createdAt: DateTime.parse(json?["createdAt"] ?? ''),
     );
   }
 
@@ -37,6 +34,5 @@ class Order {
         "total": total,
         "orderItems": List<dynamic>.from(orderItems.map((x) => x.toJson())),
         "cooking": cooking,
-        "createdAt": createdAt.toIso8601String(),
       };
 }

@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:pos/app_theme.dart';
+import 'package:pos/category/models/category.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
+import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/order/models/order.dart';
 import 'package:pos/shared/orderCard.dart';
-import 'package:pos/shared/widgets/category_static_circle.dart';
-import 'package:pos/shared/widgets/occupation_static_cercle.dart';
-import 'package:pos/shared/widgets/static_circle.dart';
-import 'package:pos/category/controllers/category_controller.dart';
-import 'package:pos/category/models/category.dart';
+import 'package:pos/table/controllers/table_controller.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class DashboardPage extends StatefulWidget {
   @override
@@ -23,13 +21,17 @@ class _DashboardPageState extends State<DashboardPage> {
       Get.put(OrderItemController());
   final OrderController orderController = Get.put(OrderController());
   final CategoryController categoryController = Get.put(CategoryController());
+  final TableController tableController = Get.put(TableController());
 
   @override
   void initState() {
     super.initState();
-    categoryController.categoryList();
+    categoryController.getCategoryList();
     orderItemController.findMostOrderedItems();
     orderController.orders;
+    orderController.fetchAllOrders();
+    tableController.getTables();
+    tableController.calculateTableOccupancy();
   }
 
   @override
@@ -195,78 +197,39 @@ class _DashboardPageState extends State<DashboardPage> {
                       child: Row(
                         children: [
                           Expanded(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Card(
-                                color: Colors.white,
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Container(
-                                  height: 450,
-                                  child: Center(
-                                      child: Text('Your Row Content Here')),
-                                ),
-                              ),
+                            flex: 1,
+                            child: _buildCardContainer(
+                              _buildRevenueChart(),
+                              'Courbe des revenus',
                             ),
                           ),
                           Expanded(
-                            flex: 2,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                  right: 10, bottom: 10, top: 10),
-                              child: Card(
-                                color: Colors.white,
-                                elevation: 2,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                child: Column(
-                                  children: [
-                                    SizedBox(height: 10),
-                                    Text(
-                                      'Top des plats',
-                                      style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                    SizedBox(height: 10),
-                                    Obx(() {
-                                      if (orderItemController
-                                          .mostOrderedItems.isEmpty) {
-                                        return Center(
-                                            child: CircularProgressIndicator());
-                                      } else {
-                                        return Expanded(
-                                          child: ListView.builder(
-                                            shrinkWrap: true,
-                                            itemCount: orderItemController
-                                                .mostOrderedItems.length,
-                                            itemBuilder: (context, index) {
-                                              OrderItem item =
-                                                  orderItemController
-                                                      .mostOrderedItems[index];
-                                              Category? category =
-                                                  categoryController
-                                                      .categoryList
-                                                      .firstWhereOrNull(
-                                                (category) =>
-                                                    category.id ==
-                                                    item.categoryId,
-                                              );
-                                              return OrderItemTile(
-                                                  item: item,
-                                                  category: category);
-                                            },
-                                          ),
-                                        );
-                                      }
-                                    }),
-                                  ],
-                                ),
-                              ),
+                            flex: 1,
+                            child: _buildCardContainer(
+                              Obx(() {
+                                if (orderItemController
+                                    .mostOrderedItems.isEmpty) {
+                                  return Center(
+                                      child: CircularProgressIndicator());
+                                } else {
+                                  return ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: orderItemController
+                                        .mostOrderedItems.length,
+                                    itemBuilder: (context, index) {
+                                      OrderItem item = orderItemController
+                                          .mostOrderedItems[index];
+                                      Category? category = categoryController
+                                          .categoryList
+                                          .firstWhereOrNull((category) =>
+                                              category.id == item.categoryId);
+                                      return OrderItemTile(
+                                          item: item, category: category);
+                                    },
+                                  );
+                                }
+                              }),
+                              'Top des plats',
                             ),
                           ),
                         ],
@@ -334,42 +297,41 @@ class _DashboardPageState extends State<DashboardPage> {
                 Center(
                   child: Text(
                     title,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black54),
                   ),
                 ),
                 SizedBox(height: 10),
                 Row(
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '$indicatorText',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.w700),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.blue,
+                        shape: BoxShape.circle,
                       ),
+                      child: Icon(icon, color: Colors.white),
                     ),
-                    if (title == 'Total des commandes')
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Icon(
-                          icon,
-                          size: 40,
-                          color: Color.fromARGB(255, 240, 76, 54),
+                    SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          statValue.toStringAsFixed(1),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black),
                         ),
-                      ),
-                    if (title != 'Total des commandes')
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: StatisticCircle(
-                            statValue: statValue.obs, icon: icon),
-                      ),
+                        Text(
+                          indicatorText,
+                          style: TextStyle(fontSize: 12, color: Colors.black54),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ],
@@ -380,85 +342,122 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildOccupationCard(String title, double width) {
-    return SizedBox(
-      width: width,
-      child: Container(
-        height: 130,
-        child: Card(
-          elevation: 3,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    title,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                SizedBox(height: 10),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.circle,
-                                color: Color.fromARGB(255, 232, 71, 71),
-                                size: 10,
-                              ),
-                              const SizedBox(width: 5),
-                              const Text(
-                                'Occupées',
-                                style: TextStyle(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.circle,
-                                color: Color.fromARGB(255, 39, 200, 82),
-                                size: 10,
-                              ),
-                              const SizedBox(width: 5),
-                              const Text(
-                                'Disponibles',
-                                style: TextStyle(fontSize: 12),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: OccupationStatisticCircle(
-                        occupiedStatValue: 0.6.obs,
-                        availableStatValue: 0.4.obs,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+  Widget _buildRevenueChart() {
+    return SfCartesianChart(
+      primaryXAxis: DateTimeAxis(),
+      series: <ChartSeries>[
+        LineSeries<RevenueData, DateTime>(
+          dataSource: _generateRevenueData(),
+          xValueMapper: (RevenueData revenue, _) => revenue.date,
+          yValueMapper: (RevenueData revenue, _) => revenue.amount,
+        ),
+      ],
+    );
+  }
+
+  List<RevenueData> _generateRevenueData() {
+    return [
+      RevenueData(DateTime(2024, 6, 20), 500),
+      RevenueData(DateTime(2024, 6, 21), 1500),
+      RevenueData(DateTime(2024, 6, 22), 2000),
+      RevenueData(DateTime(2024, 6, 23), 800),
+      RevenueData(DateTime(2024, 6, 24), 2400),
+      RevenueData(DateTime(2024, 6, 25), 1000),
+      RevenueData(DateTime(2024, 6, 26), 700),
+    ];
+  }
+
+  Widget _buildCardContainer(Widget content, String title) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        color: Colors.white,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: Container(
+          height: 500,
+          child: Column(
+            children: [
+              SizedBox(height: 10),
+              Text(
+                title,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              Expanded(child: content),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  // Exemple d'utilisation d'Obx pour afficher le taux d'occupation des tables
+  Widget _buildOccupationCard(String title, double width) {
+    return SizedBox(
+      width: width,
+      child: Obx(() => Container(
+            height: 130,
+            child: Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(Icons.table_chart, color: Colors.white),
+                        ),
+                        SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${tableController.occupiedPercentage.value.toStringAsFixed(2)}%',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                            ),
+                            Text(
+                              'Occupé',
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.black54),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          )),
     );
   }
 }
@@ -492,4 +491,11 @@ class OrderItemTile extends StatelessWidget {
       ),
     );
   }
+}
+
+class RevenueData {
+  final DateTime date;
+  final double amount;
+
+  RevenueData(this.date, this.amount);
 }

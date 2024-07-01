@@ -2,14 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/constants.dart';
-import 'package:pos/room/models/room.dart';
 import 'package:pos/table/models/table.dart';
 
 class TableController extends GetxController {
-  RxList<Room> roomList = <Room>[].obs;
   RxList<Table> tablesList = <Table>[].obs;
-
-  RxList<Table> roomTables = <Table>[].obs;
   RxBool isLoading = false.obs;
   RxDouble occupiedPercentage = 0.0.obs;
   RxDouble availablePercentage = 0.0.obs;
@@ -20,9 +16,10 @@ class TableController extends GetxController {
   void onInit() {
     super.onInit();
     getTables();
+    calculateTableOccupancy();
   }
 
-  Future<void> getTables() async {
+  Future<List<Table>> getTables() async {
     try {
       isLoading.value = true;
       final response = await _clientDio.dio.get(
@@ -41,10 +38,14 @@ class TableController extends GetxController {
 
         tablesList.assignAll(tables);
         calculateTableOccupancy();
-      } else {}
+      } else {
+        print('Échec du chargement des tables: ${response.statusCode}');
+      }
     } catch (e) {
       isLoading.value = false;
+      print('Erreur lors du chargement des tables: $e');
     }
+    return tablesList;
   }
 
   void calculateTableOccupancy() {
@@ -61,26 +62,22 @@ class TableController extends GetxController {
 
   Future<Table?> updateTable(String id) async {
     try {
-      print('ID sélectionné pour la mise à jour : $id');
-
       final dio = Dio();
       final url = Constants.updateTableUrl(id);
       final requestData = {
         'active': true,
       };
-      print('Données envoyées au backend : $requestData');
 
       final response = await dio.patch(
         url,
         data: requestData,
       );
 
-      print('Réponse du backend : ${response.data}');
-
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = response.data;
         final updatedTable = Table.fromJson(responseData);
-        print('Mise à jour réussie ! Nouvelle table : $updatedTable');
+        tablesList.refresh();
+        calculateTableOccupancy();
         return updatedTable;
       } else {
         print('Échec de la mise à jour: ${response.statusCode}');

@@ -18,6 +18,7 @@ class OrderItemController extends GetxController {
   void onInit() {
     super.onInit();
     findMostOrderedItems();
+    orderItems;
   }
 
   Future<List<OrderItem>> returnOrderItems() async {
@@ -52,6 +53,8 @@ class OrderItemController extends GetxController {
 
         orderItemsList.sort((a, b) => b.quantity.compareTo(a.quantity));
         mostOrderedItems.assignAll(orderItemsList);
+        orderItemsList;
+        mostOrderedItems.refresh();
       } else {
         throw Exception('Failed to load order items');
       }
@@ -76,7 +79,10 @@ class OrderItemController extends GetxController {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         OrderItem newItem = OrderItem.fromJson(response.data);
+        await findMostOrderedItems();
+
         orderItems.add(newItem);
+
         return newItem;
       } else {
         throw Exception('Failed to add orderItem');

@@ -15,6 +15,12 @@ class CategoryController extends GetxController {
 
   final ClientDio _clientDio = ClientDio();
 
+  @override
+  void onInit() {
+    super.onInit();
+    getCategoryList();
+  }
+
   Future<List<Category>> getCategoryList() async {
     try {
       isLoading.value = true;
@@ -33,15 +39,15 @@ class CategoryController extends GetxController {
             .toList();
 
         categoryList.assignAll(categories);
-        isLoading.value = false;
         return categoryList;
       } else {
-        isLoading.value = false;
         return [];
       }
     } catch (e) {
-      isLoading.value = false;
+      print('Error fetching categories: $e');
       rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -73,15 +79,15 @@ class CategoryController extends GetxController {
 
         originalItems = List.from(items);
         categoryItems.assignAll(items);
-        isLoading.value = false;
         return items;
       } else {
-        isLoading.value = false;
         return [];
       }
     } catch (e) {
-      isLoading.value = false;
+      print('Error fetching items by category ID: $e');
       rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -107,8 +113,12 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 201) {
         categoryItems.add(newItem);
-      } else {}
-    } catch (e) {}
+      } else {
+        print('Failed to add new item: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error adding new item: $e');
+    }
   }
 
   void filterByPrice() {

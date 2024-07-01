@@ -3,7 +3,7 @@ import 'package:get_storage/get_storage.dart';
 
 class AuthController extends GetxController {
   late final isLoggedIn = false.obs;
-  final pinCode=''.obs;
+  final pinCode = ''.obs;
 
   @override
   void onInit() {
@@ -17,6 +17,7 @@ class AuthController extends GetxController {
 
     GetStorage().write('isLoggedIn', value);
   }
+
   void savePinCode(String pin) {
     pinCode.value = pin;
     GetStorage().write('pinCode', pin);

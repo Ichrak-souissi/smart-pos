@@ -5,7 +5,6 @@ import 'package:pos/constants.dart';
 import 'package:pos/room/models/room.dart';
 import 'package:pos/table/models/table.dart';
 
-
 class RoomController extends GetxController {
   RxList<Room> roomList = <Room>[].obs;
   RxList<Table> tableList = <Table>[].obs;
@@ -13,6 +12,12 @@ class RoomController extends GetxController {
 
   RxList<Table> roomTables = <Table>[].obs;
   RxBool isLoading = false.obs;
+  @override
+  void onInit() {
+    super.initialized;
+    roomTables;
+    roomList;
+  }
 
   final ClientDio _clientDio = ClientDio();
 
@@ -29,13 +34,12 @@ class RoomController extends GetxController {
       );
       if (response.statusCode == 200) {
         final List<dynamic> roomsJson = response.data;
-        final List<Room> rooms = roomsJson
-            .map((roomJson) => Room.fromJson(roomJson))
-            .toList();
+        final List<Room> rooms =
+            roomsJson.map((roomJson) => Room.fromJson(roomJson)).toList();
         isLoading.value = false;
         roomList.assignAll(rooms);
         // ignore: avoid_print
-        print('List of rooms: $rooms'); 
+        print('List of rooms: $rooms');
         return roomList;
       } else {
         isLoading.value = false;
@@ -44,7 +48,7 @@ class RoomController extends GetxController {
     } catch (e) {
       isLoading.value = false;
       // ignore: avoid_print
-      print('Error getting room list: $e'); 
+      print('Error getting room list: $e');
       rethrow;
     }
   }
@@ -62,13 +66,12 @@ class RoomController extends GetxController {
       );
       if (response.statusCode == 200) {
         final List<dynamic> tablesJson = response.data;
-        final List<Table> tables = tablesJson
-            .map((tableJson) => Table.fromJson(tableJson))
-            .toList();
+        final List<Table> tables =
+            tablesJson.map((tableJson) => Table.fromJson(tableJson)).toList();
         isLoading.value = false;
         tables.sort((a, b) => a.position.compareTo(b.position));
         tableList.assignAll(tables);
-      print('List of tables for room ID $roomId: $tables'); 
+        print('List of tables for room ID $roomId: $tables');
         return tableList;
       } else {
         isLoading.value = false;
@@ -77,12 +80,8 @@ class RoomController extends GetxController {
     } catch (e) {
       isLoading.value = false;
       // ignore: avoid_print
-      print('Error getting tables for room ID $roomId: $e'); 
+      print('Error getting tables for room ID $roomId: $e');
       rethrow;
     }
   }
-  
-  
-
-
 }
