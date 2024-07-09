@@ -1,19 +1,22 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:pos/admin/item_management.dart';
+import 'package:pos/admin/staff_management.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/views/pin_screen.dart';
-import 'package:pos/room/views/room_view.dart';
 import 'package:pos/shared/dashboard.dart';
+import 'package:pos/room/views/room_view.dart';
+import 'package:pos/admin/room_view_admin.dart';
+import 'package:pos/app/routes/app_routes.dart';
 import 'package:pos/shared/icon_buttom.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _HomeState createState() => _HomeState();
 }
 
@@ -21,8 +24,9 @@ class _HomeState extends State<Home> {
   String currentTime = '';
   Timer? timer;
   int selectedPage = 0;
-  TextEditingController searchController = TextEditingController();
-  GlobalKey appBarKey = GlobalKey();
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+
+  final storage = GetStorage();
 
   @override
   void initState() {
@@ -30,12 +34,16 @@ class _HomeState extends State<Home> {
     updateTime();
     timer =
         Timer.periodic(const Duration(seconds: 1), (Timer t) => updateTime());
+
+    final userRole = storage.read('userRole') ?? '';
+    setState(() {
+      selectedPage = (userRole != 'admin') ? 1 : 0;
+    });
   }
 
   @override
   void dispose() {
     timer?.cancel();
-    searchController.dispose();
     super.dispose();
   }
 
@@ -47,12 +55,68 @@ class _HomeState extends State<Home> {
     });
   }
 
-  void performSearch(String query) {}
-
   void navigateToPage(int pageIndex) {
     setState(() {
       selectedPage = pageIndex;
     });
+
+    switch (pageIndex) {
+      case 0:
+        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) => DashboardPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ));
+        break;
+      case 1:
+        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) =>
+              (storage.read('userRole') == 'admin')
+                  ? RoomViewAdmin()
+                  : RoomView(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ));
+        break;
+      case 2:
+        if (storage.read('userRole') == 'admin') {
+          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) =>
+                ItemManagement(), // Navigate to ItemManagement
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ));
+        } else {
+          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) => DashboardPage(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ));
+        }
+        break;
+      case 3:
+        if (storage.read('userRole') == 'admin') {
+          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) => StaffManagement(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ));
+        } else {
+          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+            pageBuilder: (context, animation1, animation2) => DashboardPage(),
+            transitionDuration: Duration.zero,
+            reverseTransitionDuration: Duration.zero,
+          ));
+        }
+        break;
+      default:
+        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
+          pageBuilder: (context, animation1, animation2) => DashboardPage(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ));
+        break;
+    }
   }
 
   void logout() {
@@ -61,81 +125,151 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    final userRole = storage.read('userRole') ?? '';
+
+    if (userRole.isEmpty) {
+      return Scaffold(
+        body: Center(
+          child: Text("Unauthorized access"),
+        ),
+      );
+    }
+
+    List<Widget> getSidebarButtons() {
+      List<Widget> buttons = [];
+
+      if (userRole == 'admin') {
+        buttons.add(CustomIconButton(
+          onTap: () {
+            navigateToPage(0);
+          },
+          icon: Icons.dashboard_outlined,
+          selectedIcon: selectedPage,
+          index: 0,
+        ));
+        buttons.add(const SizedBox(height: 15));
+      }
+
+      buttons.add(CustomIconButton(
+        onTap: () {
+          navigateToPage(1);
+        },
+        icon: Icons.table_bar,
+        selectedIcon: selectedPage,
+        index: 1,
+      ));
+      buttons.add(const SizedBox(height: 15));
+
+      if (userRole == 'admin') {
+        buttons.add(CustomIconButton(
+          onTap: () {
+            navigateToPage(2);
+          },
+          icon: Icons.list_alt,
+          selectedIcon: selectedPage,
+          index: 2,
+        ));
+        buttons.add(const SizedBox(height: 15));
+
+        buttons.add(CustomIconButton(
+          onTap: () {
+            navigateToPage(3);
+          },
+          icon: Icons.supervisor_account_outlined,
+          selectedIcon: selectedPage,
+          index: 3,
+        ));
+        buttons.add(const SizedBox(height: 15));
+      }
+
+      buttons.add(const Spacer());
+
+      buttons.add(CustomIconButton(
+        onTap: () {
+          logout();
+        },
+        icon: Icons.logout_outlined,
+        selectedIcon: selectedPage,
+        index: 4,
+      ));
+      buttons.add(const SizedBox(height: 10));
+
+      return buttons;
+    }
+
+    String initialRoute =
+        userRole == 'admin' ? Routes.Dashboard : Routes.RoomManagement;
+
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      //appBar: CustomAppBar(currentTime: currentTime, key: appBarKey),
       body: Row(
         key: const ValueKey('home'),
         children: [
-          //Side bar
+          SizedBox(
+            height: 10,
+          ),
           Expanded(
             flex: 1,
             child: Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(12.0),
               child: Container(
                 decoration: BoxDecoration(
                   color: AppTheme.lightTheme.primaryColor,
                   borderRadius: BorderRadius.circular(20.0),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 15),
-                    CustomIconButton(
-                      onTap: () {
-                        navigateToPage(0);
-                      },
-                      icon: Icons.dashboard_outlined,
-                      selectedIcon: selectedPage,
-                      index: 0,
-                    ),
-                    const SizedBox(height: 10),
-                    CustomIconButton(
-                      onTap: () {
-                        navigateToPage(1);
-                      },
-                      icon: Icons.table_bar,
-                      selectedIcon: selectedPage,
-                      index: 1,
-                    ),
-                    const SizedBox(height: 10),
-                    CustomIconButton(
-                      onTap: () {
-                        navigateToPage(2);
-                      },
-                      icon: Icons.reorder_outlined,
-                      //  text: "Gestion des ordres ",
-                      selectedIcon: selectedPage,
-                      index: 2, // Index du bouton
-                    ),
-                    const SizedBox(height: 10),
-                    const Spacer(),
-                    CustomIconButton(
-                      onTap: () {
-                        logout();
-                      },
-                      icon: Icons.logout_outlined,
-                      //  text: "Déconnecter",
-                      selectedIcon: selectedPage,
-                      index: 3, // Index du bouton
-                    ),
-                    const SizedBox(
-                      height: 10,
-                    )
-                  ],
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10, right: 5, left: 5),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: getSidebarButtons(),
+                  ),
                 ),
               ),
             ),
           ),
           Expanded(
-            flex: 15,
-            child: IndexedStack(
-              index: selectedPage,
-              children: [
-                DashboardPage(),
-                RoomView(),
-                DashboardPage(),
-              ],
+            flex: 14,
+            child: Navigator(
+              key: _navigatorKey,
+              initialRoute: initialRoute,
+              onGenerateRoute: (RouteSettings settings) {
+                WidgetBuilder builder;
+                switch (settings.name) {
+                  case Routes.Dashboard:
+                    builder = (BuildContext _) => DashboardPage();
+                    break;
+                  case Routes.RoomManagement:
+                    builder = (BuildContext _) =>
+                        (storage.read('userRole') == 'admin')
+                            ? RoomViewAdmin()
+                            : RoomView();
+                    break;
+                  case Routes.ItemManagement:
+                    builder = (BuildContext _) => ItemManagement();
+                    break;
+                  case Routes.StaffManagement:
+                    builder = (BuildContext _) => StaffManagement();
+                    break;
+                  default:
+                    builder = (BuildContext _) => DashboardPage();
+                }
+
+                if (userRole != 'admin' && settings.name == Routes.Dashboard) {
+                  return PageRouteBuilder(
+                    pageBuilder: (context, animation1, animation2) =>
+                        RoomView(),
+                    transitionDuration: Duration.zero,
+                    reverseTransitionDuration: Duration.zero,
+                  );
+                }
+
+                return PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) =>
+                      builder(context),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                );
+              },
             ),
           ),
         ],

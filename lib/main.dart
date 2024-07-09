@@ -29,8 +29,7 @@ class MyApp extends StatelessWidget {
         if (authController.isLoggedIn.value == true) {
           return const Home();
         } else {
-          return const PinScreen(
-          );
+          return const PinScreen();
         }
       }),
     );

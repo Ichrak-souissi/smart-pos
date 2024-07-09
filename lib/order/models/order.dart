@@ -5,15 +5,17 @@ class Order {
   late final int tableId;
   late final double total;
   late final List<OrderItem> orderItems;
-  late final String cooking;
+  late final int status;
+  late final DateTime createdAt;
 
   Order({
     required this.id,
     required this.tableId,
     required this.total,
     required this.orderItems,
-    required this.cooking,
-  });
+    required this.status,
+    DateTime? createdAt,
+  }) : createdAt = createdAt ?? DateTime.now();
 
   factory Order.fromJson(Map<String, dynamic>? json) {
     return Order(
@@ -24,7 +26,10 @@ class Order {
           ? List<OrderItem>.from(
               json?["orderItems"].map((x) => OrderItem.fromJson(x)) ?? [])
           : [],
-      cooking: json?["cooking"] ?? 'inProgress',
+      status: json?["status"] ?? 1,
+      createdAt: json?["createdAt"] != null
+          ? DateTime.parse(json?["createdAt"])
+          : DateTime.now(),
     );
   }
 
@@ -33,6 +38,7 @@ class Order {
         "tableId": tableId,
         "total": total,
         "orderItems": List<dynamic>.from(orderItems.map((x) => x.toJson())),
-        "cooking": cooking,
+        "status": status,
+        "createdAt": createdAt.toIso8601String(),
       };
 }

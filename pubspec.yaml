@@ -46,6 +46,13 @@ dependencies:
   flutter_picker: ^2.1.0
   syncfusion_flutter_charts: ^20.2.45
   charts_flutter: ^0.11.0
+  pie_chart: ^5.0.0
+  flutter_svg: ^2.0.10+1
+  flutter_data_table: ^1.1.2
+  flutter_easyloading: ^3.0.5
+  flutter_staggered_animations: ^1.1.1
+  hovering: ^1.0.4
+  animated_card: ^2.0.0
 
 dev_dependencies:
   flutter_test:
@@ -64,6 +71,11 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/images/table6.svg
+    - assets/images/table2.svg
+    - assets/images/table4.svg
+    - assets/images/table5.svg
+    - assets/images/table3.svg
     - assets/images/user.png
     - assets/images/logo.png
     - assets/images/image_panier.png

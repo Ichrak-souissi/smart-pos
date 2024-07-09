@@ -6,6 +6,7 @@ class Constants {
 
   // Endpoints pour la gestion des tables
   static const String loginEndpoint = '/users/login';
+  static const String userEndpoint = '/users';
   static const String tableEndpoint = '/table';
   static const String addTableEndpoint = '/table/add';
   static const String updateTableEndpoint = '/table/{id}';
@@ -85,4 +86,11 @@ class Constants {
       '$baseUrl$ordersEndpoint/table/$tableId';
 
   static getAllOrdersUrl() => '$baseUrl$ordersEndpoint';
+
+  static String addRoomUrl() => '$baseUrl$roomEndpoint/add';
+
+  static String getUsersUrl() => '$baseUrl$userEndpoint';
+  static String addUserUrl() => '$baseUrl$userEndpoint/add';
+
+  static String addSupplementUrl() => '$baseUrl$supplementEndpoint/add';
 }

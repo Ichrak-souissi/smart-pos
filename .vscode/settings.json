@@ -1,4 +1,5 @@
 {
-    "avdmanager.sdkManager": "c:\\Users\\souis\\android_sdk\\cmdline-tools\\bin\\sdkmanager.bat",
-    "avdmanager.executable": "c:\\Users\\souis\\android_sdk\\cmdline-tools\\7.0\\bin\\avdmanager.bat"
+  "avdmanager.sdkManager": "c:\\Users\\souis\\android_sdk\\cmdline-tools\\bin\\sdkmanager.bat",
+  "avdmanager.executable": "c:\\Users\\souis\\android_sdk\\cmdline-tools\\7.0\\bin\\avdmanager.bat",
+  "dotnet.defaultSolution": "build/windows/x64/plugins/flutter_secure_storage_windows/flutter_secure_storage_windows.sln"
 }

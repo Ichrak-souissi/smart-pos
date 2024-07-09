@@ -1,5 +1,5 @@
-import 'package:dio/dio.dart';
 import 'package:get/get.dart';
+import 'package:dio/dio.dart';
 import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/constants.dart';
 import 'package:pos/room/models/room.dart';
@@ -8,18 +8,15 @@ import 'package:pos/table/models/table.dart';
 class RoomController extends GetxController {
   RxList<Room> roomList = <Room>[].obs;
   RxList<Table> tableList = <Table>[].obs;
-  RxList<Table> tablesList = <Table>[].obs;
-
-  RxList<Table> roomTables = <Table>[].obs;
   RxBool isLoading = false.obs;
-  @override
-  void onInit() {
-    super.initialized;
-    roomTables;
-    roomList;
-  }
 
   final ClientDio _clientDio = ClientDio();
+
+  @override
+  void onInit() {
+    super.onInit();
+    getRoomList();
+  }
 
   Future<List<Room>> getRoomList() async {
     try {
@@ -38,7 +35,6 @@ class RoomController extends GetxController {
             roomsJson.map((roomJson) => Room.fromJson(roomJson)).toList();
         isLoading.value = false;
         roomList.assignAll(rooms);
-        // ignore: avoid_print
         print('List of rooms: $rooms');
         return roomList;
       } else {
@@ -47,7 +43,6 @@ class RoomController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      // ignore: avoid_print
       print('Error getting room list: $e');
       rethrow;
     }
@@ -79,8 +74,68 @@ class RoomController extends GetxController {
       }
     } catch (e) {
       isLoading.value = false;
-      // ignore: avoid_print
       print('Error getting tables for room ID $roomId: $e');
+      rethrow;
+    }
+  }
+
+  void addRoom(Room room) async {
+    try {
+      isLoading.value = true;
+      final response = await _clientDio.dio.post(
+        Constants.addRoomUrl(),
+        data: room.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        roomList.insert(0, room);
+        isLoading.value = false;
+        print('Room added successfully: ${response.data}');
+      } else {
+        isLoading.value = false;
+        print('Failed to add room. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      isLoading.value = false;
+      print('Error adding room: $e');
+      rethrow;
+    }
+  }
+
+  void addTable(Table table) async {
+    try {
+      isLoading.value = true;
+
+      final response = await _clientDio.dio.post(
+        Constants.addTableUrl(),
+        data: table.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        tableList.add(table);
+        isLoading.value = false;
+        print('Table added successfully: ${response.data}');
+      } else {
+        isLoading.value = false;
+        print('Failed to add table. Status code: ${response.statusCode}');
+        if (response.statusCode == 409) {
+          print('A table already exists at this position in the same room.');
+        }
+      }
+    } catch (e) {
+      isLoading.value = false;
+      print('Error adding table: $e');
+      print('An unexpected error occurred while adding the table.');
       rethrow;
     }
   }

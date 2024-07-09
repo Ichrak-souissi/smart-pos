@@ -1,38 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/category/models/category.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
-import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/order/models/order.dart';
-import 'package:pos/shared/orderCard.dart';
+import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'widgets/category_pieChart.dart'; // Example import, adjust as needed
 
-class DashboardPage extends StatefulWidget {
-  @override
-  _DashboardPageState createState() => _DashboardPageState();
-}
-
-class _DashboardPageState extends State<DashboardPage> {
+class DashboardPage extends StatelessWidget {
   final OrderItemController orderItemController =
       Get.put(OrderItemController());
   final OrderController orderController = Get.put(OrderController());
   final CategoryController categoryController = Get.put(CategoryController());
   final TableController tableController = Get.put(TableController());
-
-  @override
-  void initState() {
-    super.initState();
-    categoryController.getCategoryList();
-    orderItemController.findMostOrderedItems();
-    orderController.orders;
-    orderController.fetchAllOrders();
-    tableController.getTables();
-    tableController.calculateTableOccupancy();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,108 +26,11 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            AppBarWidget(),
             SizedBox(height: 10),
             Expanded(child: _buildContent(context)),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildLogo(),
-          const SizedBox(width: 80),
-          _buildSearchBar(),
-          SizedBox(width: 8),
-          _buildNotification(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogo() {
-    return Container(
-      constraints: BoxConstraints(maxWidth: 130, maxHeight: 100),
-      child: Image.asset('assets/images/logo.png', fit: BoxFit.cover),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 3,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: GestureDetector(
-                  onTap: () {},
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 30),
-                    child: Container(
-                      width: double.infinity,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey.shade700,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade300,
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child:
-                            Icon(Icons.search, color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNotification() {
-    return Container(
-      height: 45,
-      width: 45,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 3,
-          ),
-        ],
-      ),
-      child: Center(
-        child: FaIcon(FontAwesomeIcons.bell, color: Colors.black54, size: 25),
       ),
     );
   }
@@ -180,15 +67,19 @@ class _DashboardPageState extends State<DashboardPage> {
                                 '${totalRevenue.toStringAsFixed(2)} dt',
                               );
                             }),
-                            _buildCard(
-                              'Total des commandes',
-                              Icons.receipt_long_outlined,
-                              orderController.orders.length.toDouble(),
-                              cardWidth,
-                              '${orderController.orders.length} commandes',
-                            ),
+                            Obx(() {
+                              return _buildCard(
+                                'Total des commandes',
+                                Icons.receipt_long_outlined,
+                                orderController.orders.length.toDouble(),
+                                cardWidth,
+                                '${orderController.orders.length} commandes',
+                              );
+                            }),
                             _buildOccupationCard(
-                                'Taux d\'occupation des tables', cardWidth),
+                              'Taux d\'occupation des tables',
+                              cardWidth,
+                            ),
                           ],
                         );
                       },
@@ -199,37 +90,18 @@ class _DashboardPageState extends State<DashboardPage> {
                           Expanded(
                             flex: 1,
                             child: _buildCardContainer(
-                              _buildRevenueChart(),
-                              'Courbe des revenus',
+                              CategoryPieChart(
+                                orderItemController: orderItemController,
+                                categoryController: categoryController,
+                              ),
+                              'Catégories commandées',
                             ),
                           ),
                           Expanded(
                             flex: 1,
                             child: _buildCardContainer(
-                              Obx(() {
-                                if (orderItemController
-                                    .mostOrderedItems.isEmpty) {
-                                  return Center(
-                                      child: CircularProgressIndicator());
-                                } else {
-                                  return ListView.builder(
-                                    shrinkWrap: true,
-                                    itemCount: orderItemController
-                                        .mostOrderedItems.length,
-                                    itemBuilder: (context, index) {
-                                      OrderItem item = orderItemController
-                                          .mostOrderedItems[index];
-                                      Category? category = categoryController
-                                          .categoryList
-                                          .firstWhereOrNull((category) =>
-                                              category.id == item.categoryId);
-                                      return OrderItemTile(
-                                          item: item, category: category);
-                                    },
-                                  );
-                                }
-                              }),
-                              'Top des plats',
+                              _buildRevenueChart(),
+                              'Revenus par jour',
                             ),
                           ),
                         ],
@@ -246,25 +118,40 @@ class _DashboardPageState extends State<DashboardPage> {
                     color: Colors.white,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
+                      borderRadius: BorderRadius.circular(0),
                     ),
                     child: Column(
                       children: [
                         SizedBox(height: 10),
                         Text(
-                          'Liste des Commandes',
+                          'Top des plats',
                           style: TextStyle(
                               fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(height: 10),
                         Expanded(
-                          child: ListView.builder(
-                            itemCount: orderController.orders.length,
-                            itemBuilder: (context, index) {
-                              return OrderCard(
-                                  order: orderController.orders[index]);
-                            },
-                          ),
+                          child: Obx(() {
+                            if (orderItemController.mostOrderedItems.isEmpty) {
+                              return Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else {
+                              return ListView.builder(
+                                itemCount:
+                                    orderItemController.mostOrderedItems.length,
+                                itemBuilder: (context, index) {
+                                  OrderItem item = orderItemController
+                                      .mostOrderedItems[index];
+                                  Category? category = categoryController
+                                      .categoryList
+                                      .firstWhereOrNull((category) =>
+                                          category.id == item.categoryId);
+                                  return OrderItemTile(
+                                      item: item, category: category);
+                                },
+                              );
+                            }
+                          }),
                         ),
                       ],
                     ),
@@ -286,8 +173,9 @@ class _DashboardPageState extends State<DashboardPage> {
         height: 130,
         child: Card(
           elevation: 3,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(0),
+          ),
           color: Colors.white,
           child: Padding(
             padding: const EdgeInsets.all(8.0),
@@ -298,9 +186,10 @@ class _DashboardPageState extends State<DashboardPage> {
                   child: Text(
                     title,
                     style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black54),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black54,
+                    ),
                   ),
                 ),
                 SizedBox(height: 10),
@@ -322,9 +211,10 @@ class _DashboardPageState extends State<DashboardPage> {
                         Text(
                           statValue.toStringAsFixed(1),
                           style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                         Text(
                           indicatorText,
@@ -343,28 +233,53 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildRevenueChart() {
+    List<RevenueData> revenueData = _generateRevenueData();
+
     return SfCartesianChart(
-      primaryXAxis: DateTimeAxis(),
+      primaryXAxis: DateTimeAxis(
+        intervalType: DateTimeIntervalType.days,
+        majorGridLines: MajorGridLines(width: 1),
+      ),
       series: <ChartSeries>[
-        LineSeries<RevenueData, DateTime>(
-          dataSource: _generateRevenueData(),
+        ColumnSeries<RevenueData, DateTime>(
+          dataSource: revenueData,
           xValueMapper: (RevenueData revenue, _) => revenue.date,
           yValueMapper: (RevenueData revenue, _) => revenue.amount,
+          dataLabelSettings: DataLabelSettings(
+            isVisible: true,
+          ),
         ),
       ],
     );
   }
 
   List<RevenueData> _generateRevenueData() {
-    return [
-      RevenueData(DateTime(2024, 6, 20), 500),
-      RevenueData(DateTime(2024, 6, 21), 1500),
-      RevenueData(DateTime(2024, 6, 22), 2000),
-      RevenueData(DateTime(2024, 6, 23), 800),
-      RevenueData(DateTime(2024, 6, 24), 2400),
-      RevenueData(DateTime(2024, 6, 25), 1000),
-      RevenueData(DateTime(2024, 6, 26), 700),
-    ];
+    List<Order> orders = orderController.orders;
+    Map<DateTime, double> dailyRevenueMap = {};
+
+    DateTime now = DateTime.now();
+    int daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+    for (int day = 1; day <= daysInMonth; day++) {
+      dailyRevenueMap[DateTime(now.year, now.month, day)] = 0.0;
+    }
+
+    orders.forEach((order) {
+      DateTime createdAt = DateTime(
+          order.createdAt.year, order.createdAt.month, order.createdAt.day);
+
+      dailyRevenueMap[createdAt] = dailyRevenueMap[createdAt] =
+          (dailyRevenueMap[createdAt] ?? 0.0) +
+              double.parse(order.total.toStringAsFixed(2));
+    });
+
+    List<RevenueData> revenueData = dailyRevenueMap.entries
+        .where((entry) => entry.value != 0.0)
+        .map((entry) => RevenueData(entry.key, entry.value))
+        .toList();
+
+    revenueData.sort((a, b) => a.date.compareTo(b.date));
+
+    return revenueData;
   }
 
   Widget _buildCardContainer(Widget content, String title) {
@@ -374,7 +289,7 @@ class _DashboardPageState extends State<DashboardPage> {
         color: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(0),
         ),
         child: Container(
           height: 500,
@@ -383,7 +298,10 @@ class _DashboardPageState extends State<DashboardPage> {
               SizedBox(height: 10),
               Text(
                 title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black54),
               ),
               SizedBox(height: 10),
               Expanded(child: content),
@@ -394,16 +312,21 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  // Exemple d'utilisation d'Obx pour afficher le taux d'occupation des tables
   Widget _buildOccupationCard(String title, double width) {
     return SizedBox(
       width: width,
-      child: Obx(() => Container(
+      child: GetBuilder<TableController>(
+        init: TableController(),
+        builder: (tableController) {
+          double occupiedPercentage = tableController.occupiedPercentage.value;
+
+          return Container(
             height: 130,
             child: Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+                borderRadius: BorderRadius.circular(0),
+              ),
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -437,7 +360,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${tableController.occupiedPercentage.value.toStringAsFixed(2)}%',
+                              '${occupiedPercentage.toStringAsFixed(2)}%',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -457,7 +380,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ),
-          )),
+          );
+        },
+      ),
     );
   }
 }
@@ -475,7 +400,9 @@ class OrderItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CircleAvatar(),
+      leading: CircleAvatar(
+          //backgroundImage: NetworkImage(item.imageUrl),
+          ),
       title: Text(item.name, style: TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('${item.quantity} commandes'),
       trailing: Container(

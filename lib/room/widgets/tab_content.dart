@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/order-item/models/order-item.dart';
@@ -27,17 +28,18 @@ class TabContent extends StatefulWidget {
 
 class _TabContentState extends State<TabContent> {
   final CounterController counterController = Get.put(CounterController());
-  final TableController tableController = Get.find();
-  final OrderController orderController = Get.find();
+  late final TableController tableController;
+  late final OrderController orderController;
+  final RoomController roomController = Get.put(RoomController());
+
+  Map<Item, String> itemNotes = {};
+
   @override
   void initState() {
     super.initState();
-
-    orderController.orders;
-    tableController.initialized;
+    tableController = Get.find();
+    orderController = Get.find();
   }
-
-  Map<Item, String> itemNotes = {};
 
   List<OrderItem> getOrderItemsFromMap(Map<Item, int> orderMap, int orderId) {
     return orderMap.entries.map((entry) {
@@ -78,6 +80,7 @@ class _TabContentState extends State<TabContent> {
     } else {
       if (widget.selectedTableId != null) {
         await tableController.updateTable(widget.selectedTableId!);
+
         List<OrderItem> orderItems = getOrderItemsFromMap(
             widget.orderMap, counterController.counter.value);
 
@@ -85,15 +88,17 @@ class _TabContentState extends State<TabContent> {
           tableId: int.parse(widget.selectedTableId!),
           total: widget.calculateTotal(widget.orderMap),
           orderItems: orderItems,
-          cooking: 'in progress',
+          status: 1,
+          createdAt: DateTime.now(),
           id: counterController.counter.value,
         );
 
         print('Order Details:');
         print('  Table ID: ${order.tableId}');
         print('  Total: ${order.total}');
-        print('  Cooking Status: ${order.cooking}');
+        print('  Cooking Status: ${order.status}');
         print('  Order ID: ${order.id}');
+        print('  Created At: ${order.createdAt}');
         print('  Order Items: ${order.orderItems.length}');
         for (var orderItem in order.orderItems) {
           print('    Item: ${orderItem.name}');
@@ -111,6 +116,8 @@ class _TabContentState extends State<TabContent> {
         setState(() {
           widget.orderMap.clear();
         });
+        await roomController
+            .initialized; // Attendre l'initialisation de la salle
       }
     }
   }
@@ -469,27 +476,6 @@ class _TabContentState extends State<TabContent> {
                           Text('${subTotal.toStringAsFixed(2)} dt'),
                         ],
                       ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          ElevatedButton(
-                            onPressed: () => _handleOrderSubmit(context),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Color.fromARGB(255, 221, 136, 9),
-                              backgroundColor: Color.fromARGB(255, 221, 136, 9),
-                            ),
-                            child: const Text(
-                              'Commander',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -521,21 +507,13 @@ class _TabContentState extends State<TabContent> {
                       ),
                     ),
                     ElevatedButton(
-                      onPressed: () {
-                        if (widget.orderMap.isNotEmpty) {
-                          setState(() {
-                            counterController.increment();
-                          });
-                        } else {
-                          _showOrderAlert(context);
-                        }
-                      },
+                      onPressed: () => _handleOrderSubmit(context),
                       style: ElevatedButton.styleFrom(
-                        foregroundColor: AppTheme.lightTheme.primaryColor,
-                        backgroundColor: AppTheme.lightTheme.primaryColor,
+                        foregroundColor: Color.fromARGB(255, 221, 136, 9),
+                        backgroundColor: Color.fromARGB(255, 221, 136, 9),
                       ),
                       child: const Text(
-                        'Payer',
+                        'Commander',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,

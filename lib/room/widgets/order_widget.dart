@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
+import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/widgets/tab_content.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/item/views/item_view.dart';
@@ -12,10 +13,7 @@ import 'package:pos/table/controllers/table_controller.dart';
 
 class OrderWidget extends StatefulWidget {
   final int selectedTableId;
-  const OrderWidget({
-    super.key,
-    required this.selectedTableId,
-  });
+  const OrderWidget({super.key, required this.selectedTableId});
 
   @override
   State<OrderWidget> createState() => _OrderWidgetState();
@@ -23,8 +21,8 @@ class OrderWidget extends StatefulWidget {
 
 class _OrderWidgetState extends State<OrderWidget> {
   final CategoryController categoryController = Get.put(CategoryController());
-
   final TableController tableController = Get.put(TableController());
+  final RoomController roomController = Get.put(RoomController());
 
   int selectedCardIndex = 0;
   final TextEditingController _searchController = TextEditingController();
@@ -43,12 +41,8 @@ class _OrderWidgetState extends State<OrderWidget> {
 
   @override
   void initState() {
-    tableController.initialized;
     super.initState();
-    categoryController.getItemsByCategoryId;
     _loadCategoryItems();
-
-    tableController.initialized;
   }
 
   void _loadCategoryItems() async {
@@ -78,7 +72,6 @@ class _OrderWidgetState extends State<OrderWidget> {
       name: item.name,
       categoryId: item.categoryId,
       description: item.description,
-      duration: item.duration,
       imageUrl: item.imageUrl,
       discount: item.discount,
       price: item.price + supplementsTotal,

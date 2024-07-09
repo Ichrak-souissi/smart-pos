@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/item/models/item.dart';
@@ -8,7 +8,9 @@ import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
 import 'package:pos/room/controllers/room_controller.dart';
+import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/room/widgets/order_widget.dart';
+import 'package:pos/table/widgets/cicular_table.dart';
 
 class RoomView extends StatefulWidget {
   const RoomView({Key? key}) : super(key: key);
@@ -24,14 +26,15 @@ class _RoomViewState extends State<RoomView> {
       Get.put(OrderItemController());
   int selectedRoomIndex = 0;
   var selectedTable;
-  List<Order> ordersForSelectedTable = [];
-  List<OrderItem> orderItems = [];
+  RxList<Order> ordersForSelectedTable = RxList<Order>();
+  RxList<OrderItem> orderItems = RxList<OrderItem>();
 
   @override
   void initState() {
     super.initState();
     _loadRoomTables();
     orderController.orders;
+    roomController.tableList;
 
     orderItemController.mostOrderedItems;
     orderItemController.orderItems;
@@ -41,23 +44,20 @@ class _RoomViewState extends State<RoomView> {
   Future<void> _loadOrdersAndItemsByTableId(int tableId) async {
     try {
       await orderController.fetchOrdersByTableId(tableId.toString());
-      setState(() {
-        ordersForSelectedTable = orderController.orders
-            .where((order) => order.tableId == tableId)
-            .toList();
-      });
+      ordersForSelectedTable.assignAll(orderController.orders
+          .where((order) => order.tableId == tableId)
+          .toList());
 
       List<OrderItem> loadedOrderItems = [];
       for (var order in ordersForSelectedTable) {
         await orderItemController.fetchOrderItemsByOrderId(order.id.toString());
         loadedOrderItems.addAll(orderItemController.orderItems);
       }
-      setState(() {
-        orderItems = loadedOrderItems;
-        orderItems.forEach((orderItem) {
-          print(
-              'Order Item: ${orderItem.name}, Quantity: ${orderItem.quantity}, Price: ${orderItem.price}, Note: ${orderItem.note}');
-        });
+
+      orderItems.assignAll(loadedOrderItems);
+      orderItems.forEach((orderItem) {
+        print(
+            'Order Item: ${orderItem.name}, Quantity: ${orderItem.quantity}, Price: ${orderItem.price}, Note: ${orderItem.note}');
       });
     } catch (e) {
       print('Error loading orders and items: $e');
@@ -87,102 +87,7 @@ class _RoomViewState extends State<RoomView> {
                 flex: 5,
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(6.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Container(
-                            constraints: BoxConstraints(
-                              maxWidth: 140,
-                              maxHeight: 100,
-                            ),
-                            child: Image.asset(
-                              'assets/images/logo.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          const SizedBox(width: 20),
-                          Flexible(
-                            child: Padding(
-                              padding: const EdgeInsets.all(10),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  color: Colors.white,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          setState(() {});
-                                        },
-                                        child: ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 30,
-                                          ),
-                                          child: Container(
-                                            width: double.infinity,
-                                            height: 30,
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: Colors.grey.shade500,
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.grey.shade300,
-                                                  offset: const Offset(0, 2),
-                                                  blurRadius: 4,
-                                                ),
-                                              ],
-                                            ),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.search,
-                                                color: Colors.white,
-                                                size: 20,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: PopupMenuButton<String>(
-                              icon: FaIcon(
-                                FontAwesomeIcons.sliders,
-                                color: Colors.black38,
-                                size: 20,
-                              ),
-                              itemBuilder: (BuildContext context) =>
-                                  <PopupMenuEntry<String>>[
-                                const PopupMenuItem<String>(
-                                  value: 'alphabet',
-                                  child: Text('Tables occupées'),
-                                ),
-                                const PopupMenuItem<String>(
-                                  value: 'creationDate',
-                                  child: Text('Tables disponibles'),
-                                ),
-                              ],
-                              onSelected: (String value) {
-                                setState(() {});
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    AppBarWidget(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Row(
@@ -252,9 +157,9 @@ class _RoomViewState extends State<RoomView> {
                                   gridDelegate:
                                       const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 5,
-                                    mainAxisSpacing: 20.0,
-                                    crossAxisSpacing: 20.0,
-                                    childAspectRatio: 0.7,
+                                    mainAxisSpacing: 5.0,
+                                    crossAxisSpacing: 5.0,
+                                    childAspectRatio: 1.5,
                                   ),
                                   itemCount: roomController.tableList.length,
                                   itemBuilder: (context, index) {
@@ -288,40 +193,10 @@ class _RoomViewState extends State<RoomView> {
                                           );
                                         }
                                       },
-                                      child: Card(
-                                        color: Colors.white,
-                                        elevation: 1,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                          side: BorderSide(
-                                            color: borderColor,
-                                            width: 2,
-                                          ),
-                                        ),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(20),
-                                          child: Stack(
-                                            alignment: Alignment.center,
-                                            children: [
-                                              Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  Text(
-                                                    'Table N° ${table.id}',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                      fontSize: 16,
-                                                      color: Colors.black,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                                      child: CircularTable(
+                                        capacity: table.capacity,
+                                        tableName: 'Table N° ${table.position}',
+                                        borderColor: borderColor,
                                       ),
                                     );
                                   },
@@ -357,7 +232,7 @@ class _RoomViewState extends State<RoomView> {
                                       ),
                                       padding: EdgeInsets.all(10),
                                       child: Text(
-                                        'Table N°${selectedTable.id}',
+                                        'Table N°${selectedTable.position}',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
@@ -431,8 +306,7 @@ class _RoomViewState extends State<RoomView> {
                                       ),
                                     ),
                                     SizedBox(height: 10),
-                                    if (order.cooking.toLowerCase() ==
-                                        'in progress')
+                                    if (order.status == 1)
                                       Padding(
                                         padding: const EdgeInsets.all(6.0),
                                         child: Row(
@@ -470,7 +344,7 @@ class _RoomViewState extends State<RoomView> {
                                             flex: 4,
                                             child: Center(
                                               child: Text(
-                                                'Qté',
+                                                'Qantite',
                                                 style: TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
@@ -504,9 +378,6 @@ class _RoomViewState extends State<RoomView> {
                                           ),
                                         ],
                                       ),
-                                    ),
-                                    SizedBox(
-                                      height: 10,
                                     ),
                                     for (var orderItem in orderItems.where(
                                         (orderItem) =>
@@ -627,8 +498,10 @@ class _RoomViewState extends State<RoomView> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                          left: 8),
-                                                  child: Row(
+                                                          left: 2),
+                                                  child: Wrap(
+                                                    spacing: 2.0,
+                                                    runSpacing: 2.0,
                                                     children: [
                                                       for (var supplement
                                                           in orderItem

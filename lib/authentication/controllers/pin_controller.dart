@@ -12,6 +12,8 @@ import '../models/user.dart';
 class PinController extends GetxController {
   final ClientDio _clientDio = ClientDio();
   late User? user;
+  final users = RxList<User>();
+  final storage = GetStorage();
 
   Future<void> sendPin(String pin) async {
     try {
@@ -23,10 +25,16 @@ class PinController extends GetxController {
       if (response.statusCode == 200) {
         Logger().i(response.data);
         user = User.fromJson(response.data);
-        Logger().d(user!.code);
-        AuthController().isLoggedIn(true);
-        GetStorage().write('isLoggedIn', true);
-        Get.offAll( const Home());
+
+        storage.write('userName', user!.name);
+        storage.write('userRole', user!.role);
+
+        print('Nom utilisateur: ${user!.name}');
+        print('Rôle utilisateur: ${user!.role}');
+
+        AuthController().setLoggedIn(true);
+
+        Get.offAll(() => const Home());
       } else {
         throw (
           response: response,
@@ -37,8 +45,59 @@ class PinController extends GetxController {
       if (e.response?.statusCode == 404) {
         Get.snackbar('Le code tapé est incorrect', 'Vérifiez votre code pin ');
       }
-    }catch (e) {
+    } catch (e) {
       Get.snackbar('Erreur', '$e');
+    }
+  }
+
+  Future<void> getAllUsers() async {
+    try {
+      final response = await _clientDio.dio.get(Constants.getUsersUrl());
+
+      if (response.statusCode == 200) {
+        final jsonData = response.data;
+        final usersList =
+            jsonData.map<User>((jsonUser) => User.fromJson(jsonUser)).toList();
+        users.value = usersList;
+      } else {
+        print('Failed to load users');
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  Future<User?> addUser(User newUser) async {
+    try {
+      final response = await _clientDio.dio.post(
+        Constants.addUserUrl(), // Assurez-vous que l'URL correcte est utilisée
+        data: {
+          'name': newUser.name,
+          'role': newUser.role,
+          'code': newUser.code,
+          'phone': newUser.phone,
+        },
+      );
+
+      if (response.statusCode == 201) {
+        // 201 Created
+        final jsonUser = response.data;
+        final addedUser = User.fromJson(jsonUser);
+
+        // Ajouter l'utilisateur à la liste locale
+        users.add(addedUser);
+
+        // Sauvegarder l'utilisateur dans le storage
+        //  AuthController().addUser(addedUser);
+
+        return addedUser;
+      } else {
+        print('Failed to add user');
+        return null;
+      }
+    } catch (e) {
+      print('Error: $e');
+      return null;
     }
   }
 }

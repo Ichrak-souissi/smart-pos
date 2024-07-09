@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/constants.dart';
+import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/table/models/table.dart';
 
 class TableController extends GetxController {
@@ -9,12 +10,14 @@ class TableController extends GetxController {
   RxBool isLoading = false.obs;
   RxDouble occupiedPercentage = 0.0.obs;
   RxDouble availablePercentage = 0.0.obs;
+  final RoomController roomController = Get.put(RoomController());
 
   final ClientDio _clientDio = ClientDio();
 
   @override
   void onInit() {
     super.onInit();
+
     getTables();
     calculateTableOccupancy();
   }

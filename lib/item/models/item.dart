@@ -8,7 +8,6 @@ class Item {
   String imageUrl;
   int calories;
   bool isActive;
-  int duration;
   int categoryId;
   DateTime createdAt;
   int? discount;
@@ -22,7 +21,6 @@ class Item {
     required this.imageUrl,
     required this.calories,
     this.isActive = true,
-    required this.duration,
     required this.categoryId,
     required this.createdAt,
     this.discount,
@@ -38,7 +36,6 @@ class Item {
       imageUrl: json["imageUrl"] ?? '',
       calories: json["calories"] ?? 0,
       isActive: json["isActive"] ?? false,
-      duration: json["duration"] ?? 0,
       categoryId: json["categoryId"] ?? 0,
       createdAt: DateTime.parse(json["createdAt"] ?? ''),
       discount: json["discount"],
@@ -48,19 +45,22 @@ class Item {
     );
   }
 
-  Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "description": description,
-        "price": price,
-        "imageUrl": imageUrl,
-        "calories": calories,
-        "isActive": isActive,
-        "duration": duration,
-        "categoryId": categoryId,
-        "createdAt": createdAt.toIso8601String(),
-        "discount": discount,
-        "supplements":
-            supplements?.map((supplement) => supplement.toJson()).toList(),
-      };
+  Map<String, dynamic> toJson() {
+    // Convertir l'objet en JSON en excluant createdAt et updatedAt
+    Map<String, dynamic> json = {
+      "id": id,
+      "name": name,
+      "description": description,
+      "price": price,
+      "imageUrl": imageUrl,
+      "calories": calories,
+      "isActive": isActive,
+      "categoryId": categoryId,
+      "discount": discount,
+      "supplements":
+          supplements?.map((supplement) => supplement.toJson()).toList(),
+    };
+
+    return json;
+  }
 }

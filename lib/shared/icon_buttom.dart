@@ -20,16 +20,21 @@ class CustomIconButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 50.0, 
-        height: 50.0, 
+        width: 55.0,
+        height: 55.0,
         decoration: BoxDecoration(
-          color: selectedIcon == index ? Colors.white : AppTheme.lightTheme.primaryColor,
+          color: selectedIcon == index
+              ? Colors.white
+              : AppTheme.lightTheme.primaryColor,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Center(
           child: Icon(
+            size: 30,
             icon,
-            color: selectedIcon == index ? AppTheme.lightTheme.primaryColor : Colors.white,
+            color: selectedIcon == index
+                ? AppTheme.lightTheme.primaryColor
+                : Colors.white,
           ),
         ),
       ),
