@@ -225,7 +225,6 @@ class _StaffManagementState extends State<StaffManagement>
                             await userController.updateUser(updatedUser);
 
                             setState(() {
-                              // Mettre à jour l'utilisateur dans la liste
                               final index = filteredUsers
                                   .indexWhere((u) => u.id == user.id);
                               if (index != -1) {

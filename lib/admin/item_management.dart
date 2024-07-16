@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/category/models/category.dart';
 import 'package:pos/item/models/item.dart';
@@ -17,7 +15,6 @@ class ItemManagement extends StatefulWidget {
 class _ItemManagementState extends State<ItemManagement> {
   final CategoryController categoryController = Get.put(CategoryController());
   final TableController tableController = Get.put(TableController());
-  final TextEditingController _searchController = TextEditingController();
   Map<Item, int> orderMap = {};
   int selectedCategoryIndex = 0;
 
@@ -196,7 +193,6 @@ class _ItemManagementState extends State<ItemManagement> {
               onPressed: () async {
                 await categoryController.deleteCategory(category);
                 Navigator.of(context).pop();
-                // Removed Snackbar Notification
               },
               child: Text('Supprimer'),
             ),
@@ -431,7 +427,6 @@ class _ItemManagementState extends State<ItemManagement> {
                 if (categoryName.isNotEmpty) {
                   //    await categoryController.(categoryName);
                   Navigator.of(context).pop();
-                  // Removed Snackbar Notification
                 }
               },
               child: Text('Ajouter'),
@@ -442,10 +437,7 @@ class _ItemManagementState extends State<ItemManagement> {
     );
   }
 
-  Future<void> _showAddItemDialog(Category category) async {
-    // Add your add item dialog implementation here
-    // Removed Snackbar Notification
-  }
+  Future<void> _showAddItemDialog(Category category) async {}
 
   bool isNewItem(DateTime createdAt) {
     Duration difference = DateTime.now().difference(createdAt);

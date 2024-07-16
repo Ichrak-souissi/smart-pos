@@ -239,17 +239,6 @@ class _RoomViewState extends State<RoomViewAdmin> {
 
                           tableCountInRoom++;
                           Navigator.of(context).pop();
-
-                          //   ScaffoldMessenger.of(context).showSnackBar(
-                          //    SnackBar(
-                          //      backgroundColor: Colors.white,
-                          //     content: Text(
-                          //     'Table ajoutée avec succès',
-                          //     style: TextStyle(color: Colors.black),
-                          //    ),
-                          //    duration: Duration(seconds: 1),
-                          //    ),
-                          //  );
                         } catch (e) {
                           print('Error adding table: $e');
                         }
@@ -329,13 +318,6 @@ class _RoomViewState extends State<RoomViewAdmin> {
                   roomController.addRoom(room);
                   roomController.roomList.add(room);
                   Navigator.of(context).pop();
-
-                  // ScaffoldMessenger.of(context).showSnackBar(
-                  // SnackBar(
-                  //   content: Text('Salle ajoutée avec succès'),
-                  //   duration: Duration(seconds: 1),
-                  // ),
-                  //  );
                 }
               },
             ),
