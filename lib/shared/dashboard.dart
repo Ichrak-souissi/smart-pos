@@ -21,7 +21,7 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color.fromARGB(255, 250, 255, 245),
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

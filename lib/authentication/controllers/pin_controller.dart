@@ -70,7 +70,7 @@ class PinController extends GetxController {
   Future<User?> addUser(User newUser) async {
     try {
       final response = await _clientDio.dio.post(
-        Constants.addUserUrl(), // Assurez-vous que l'URL correcte est utilisée
+        Constants.addUserUrl(),
         data: {
           'name': newUser.name,
           'role': newUser.role,
@@ -80,14 +80,11 @@ class PinController extends GetxController {
       );
 
       if (response.statusCode == 201) {
-        // 201 Created
         final jsonUser = response.data;
         final addedUser = User.fromJson(jsonUser);
 
-        // Ajouter l'utilisateur à la liste locale
         users.add(addedUser);
 
-        // Sauvegarder l'utilisateur dans le storage
         //  AuthController().addUser(addedUser);
 
         return addedUser;

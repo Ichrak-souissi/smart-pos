@@ -33,7 +33,8 @@ class Item {
       name: json["name"] ?? '',
       description: json["description"] ?? '',
       price: (json["price"] ?? 0).toDouble(),
-      imageUrl: json["imageUrl"] ?? '',
+      imageUrl: json["imageUrl"] ??
+          '', // Mise à jour pour récupérer l'URL depuis JSON
       calories: json["calories"] ?? 0,
       isActive: json["isActive"] ?? false,
       categoryId: json["categoryId"] ?? 0,
@@ -46,7 +47,6 @@ class Item {
   }
 
   Map<String, dynamic> toJson() {
-    // Convertir l'objet en JSON en excluant createdAt et updatedAt
     Map<String, dynamic> json = {
       "id": id,
       "name": name,

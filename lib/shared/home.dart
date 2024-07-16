@@ -3,12 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/intl.dart';
-import 'package:pos/admin/item_management.dart';
 import 'package:pos/admin/staff_management.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/views/pin_screen.dart';
 import 'package:pos/shared/dashboard.dart';
-import 'package:pos/room/views/room_view.dart';
+import 'package:pos/waiter/room_view.dart';
 import 'package:pos/admin/room_view_admin.dart';
 import 'package:pos/app/routes/app_routes.dart';
 import 'package:pos/shared/icon_buttom.dart';
@@ -81,8 +80,7 @@ class _HomeState extends State<Home> {
       case 2:
         if (storage.read('userRole') == 'admin') {
           _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                ItemManagement(), // Navigate to ItemManagement
+            pageBuilder: (context, animation1, animation2) => ItemManagement(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ));
@@ -201,7 +199,7 @@ class _HomeState extends State<Home> {
         userRole == 'admin' ? Routes.Dashboard : Routes.RoomManagement;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: const Color.fromARGB(255, 250, 255, 245),
       body: Row(
         key: const ValueKey('home'),
         children: [

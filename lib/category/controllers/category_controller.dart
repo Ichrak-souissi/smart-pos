@@ -1,5 +1,3 @@
-// ignore_for_file: empty_catches
-
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:pos/Dio/client_dio.dart';
@@ -48,6 +46,30 @@ class CategoryController extends GetxController {
       rethrow;
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteCategory(Category category) async {
+    try {
+      print('Deleting category with ID: ${category.id}');
+      final response = await _clientDio.dio.delete(
+        Constants.deleteCategoryUrl(category.id.toString()),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        categoryList.remove(category);
+        print('Category deleted successfully');
+      } else {
+        print('Failed to delete category: ${response.statusCode}');
+        print('Response data: ${response.data}');
+      }
+    } catch (e) {
+      print('Error deleting category: $e');
     }
   }
 
@@ -121,6 +143,35 @@ class CategoryController extends GetxController {
     }
   }
 
+  Future<void> deleteItem(int itemId) async {
+    try {
+      print('Deleting item with ID: ${itemId}');
+      print(
+          'Delete request URL: ${Constants.deleteItemUrl(itemId.toString())}');
+
+      final response = await _clientDio.dio.delete(
+        Constants.deleteItemUrl(itemId.toString()),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        categoryItems.remove(itemId);
+        print('Item deleted successfully');
+
+        //await getItemsByCategoryId(item.categoryId);
+      } else {
+        print('Failed to delete item: ${response.statusCode}');
+        print('Response data: ${response.data}');
+      }
+    } catch (e) {
+      print('Error deleting item: $e');
+    }
+  }
+
   void filterByPrice() {
     categoryItems.sort((a, b) => a.price.compareTo(b.price));
     update();
@@ -134,5 +185,26 @@ class CategoryController extends GetxController {
   void filterByCreationDate() {
     categoryItems.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     update();
+  }
+
+  Future<void> addNewCategory(Category newCategory) async {
+    try {
+      final response = await _clientDio.dio.post(
+        Constants.addCategoryUrl(),
+        data: newCategory.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      if (response.statusCode == 201) {
+        categoryList.add(newCategory);
+      } else {
+        print('Failed to add new category: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error adding new category: $e');
+    }
   }
 }

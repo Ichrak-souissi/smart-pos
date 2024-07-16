@@ -2,7 +2,7 @@ import 'package:get/get_navigation/src/routes/get_route.dart';
 import 'package:pos/admin/item_management.dart';
 import 'package:pos/admin/staff_management.dart';
 import 'package:pos/app/routes/app_routes.dart';
-import 'package:pos/room/views/room_view.dart';
+import 'package:pos/waiter/room_view.dart';
 import 'package:pos/shared/dashboard.dart';
 import '../../authentication/views/pin_screen.dart';
 import '../../shared/home.dart';

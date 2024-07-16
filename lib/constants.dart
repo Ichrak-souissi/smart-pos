@@ -93,4 +93,17 @@ class Constants {
   static String addUserUrl() => '$baseUrl$userEndpoint/add';
 
   static String addSupplementUrl() => '$baseUrl$supplementEndpoint/add';
+
+  static String deleteItemUrl(String id) => '$baseUrl$itemEndpoint/$id';
+  static String addCategoryUrl() => '$baseUrl$categoryEndpoint/add';
+
+  static String updateItemUrl(String id) => '$baseUrl$itemEndpoint/{id}';
+
+  static updateUserUrl(int id) => '$baseUrl/users/$id';
+
+  static deleteUserUrl(int id) => '$baseUrl/users/$id';
+
+  static String deleteCategoryUrl(String id) => '$baseUrl$categoryEndpoint/$id';
+
+  static String deleteRoomUrl(String id) => '$baseUrl$roomEndpoint/$id';
 }

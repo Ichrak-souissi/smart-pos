@@ -79,7 +79,7 @@ class _RoomViewState extends State<RoomView> {
     return DefaultTabController(
       length: roomController.roomList.length,
       child: Scaffold(
-        backgroundColor: Colors.grey.shade50,
+        backgroundColor: const Color.fromARGB(255, 250, 255, 245),
         body: SafeArea(
           child: Row(
             children: [
@@ -124,8 +124,8 @@ class _RoomViewState extends State<RoomView> {
                       padding: const EdgeInsets.all(8.0),
                       child: TabBar(
                         isScrollable: true,
-                        indicatorColor: Colors.redAccent,
-                        labelColor: Colors.redAccent,
+                        indicatorColor: AppTheme.lightTheme.primaryColor,
+                        labelColor: Colors.black,
                         tabs: List.generate(
                           roomController.roomList.length,
                           (index) => Tab(

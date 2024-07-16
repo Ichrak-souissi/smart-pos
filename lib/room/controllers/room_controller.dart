@@ -139,4 +139,31 @@ class RoomController extends GetxController {
       rethrow;
     }
   }
+
+  Future<void> deleteRoom(Room room) async {
+    try {
+      isLoading.value = true;
+      final response = await _clientDio.dio.delete(
+        Constants.deleteRoomUrl(room.id.toString()),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        roomList.remove(room);
+        isLoading.value = false;
+        print('Room deleted successfully');
+      } else {
+        isLoading.value = false;
+        print('Failed to delete room. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      isLoading.value = false;
+      print('Error deleting room: $e');
+      rethrow;
+    }
+  }
 }

@@ -127,11 +127,6 @@ class _OrderWidgetState extends State<OrderWidget> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Bienvenue',
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 22),
-                          ),
                           const SizedBox(width: 16),
                           Flexible(
                             child: Padding(
@@ -253,8 +248,8 @@ class _OrderWidgetState extends State<OrderWidget> {
                       padding: const EdgeInsets.all(8.0),
                       child: TabBar(
                         isScrollable: true,
-                        indicatorColor: Colors.redAccent,
-                        labelColor: Colors.redAccent,
+                        indicatorColor: AppTheme.lightTheme.primaryColor,
+                        labelColor: Colors.black,
                         tabs: List.generate(
                           categoryController.categoryList.length,
                           (index) => Tab(
@@ -309,7 +304,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                                             Container(
                                               decoration: BoxDecoration(
                                                 borderRadius:
-                                                    BorderRadius.circular(12),
+                                                    BorderRadius.circular(10),
                                                 border: Border.all(
                                                     color: Colors.grey.shade200,
                                                     width: 1),
@@ -334,13 +329,13 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                             borderRadius:
                                                                 BorderRadius
                                                                     .circular(
-                                                                        10),
-                                                            //  image:
-                                                            //      DecorationImage(
-                                                            //   image: NetworkImage(
-                                                            //      item.imageUrl),
-                                                            //  fit: BoxFit.cover,
-                                                            //  ),
+                                                                        5),
+                                                            image:
+                                                                DecorationImage(
+                                                              image: NetworkImage(
+                                                                  item.imageUrl),
+                                                              fit: BoxFit.cover,
+                                                            ),
                                                           ),
                                                         ),
                                                       ),

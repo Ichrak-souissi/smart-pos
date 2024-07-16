@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:pos/order/models/order.dart';
 
-Table tableFromJson(String str) => Table.fromJson(json.decode(str));
+//Table tableFromJson(String str) => Table.fromJson(json.decode(str));
 
-String tableToJson(Table data) => json.encode(data.toJson());
+//String tableToJson(Table data) => json.encode(data.toJson());
 
 class Table {
   int id;
@@ -13,7 +13,7 @@ class Table {
   //bool reserved;
   int position;
   int roomId;
-  final List<Order> orders; // Liste des commandes associées à cette table
+  final List<Order> orders;
 
   Table(
       {required this.id,
