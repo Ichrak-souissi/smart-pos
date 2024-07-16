@@ -11,9 +11,11 @@ import 'package:pos/waiter/room_view.dart';
 import 'package:pos/admin/room_view_admin.dart';
 import 'package:pos/app/routes/app_routes.dart';
 import 'package:pos/shared/icon_buttom.dart';
+import 'package:pos/admin/item_management.dart'
+    as AdminItemManagement; // Alias added
 
 class Home extends StatefulWidget {
-  const Home({super.key});
+  const Home({Key? key}) : super(key: key); // Fix typo in super constructor
 
   @override
   _HomeState createState() => _HomeState();
@@ -80,7 +82,8 @@ class _HomeState extends State<Home> {
       case 2:
         if (storage.read('userRole') == 'admin') {
           _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => ItemManagement(),
+            pageBuilder: (context, animation1, animation2) =>
+                AdminItemManagement.ItemManagement(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ));
@@ -92,6 +95,7 @@ class _HomeState extends State<Home> {
           ));
         }
         break;
+
       case 3:
         if (storage.read('userRole') == 'admin') {
           _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
@@ -243,7 +247,8 @@ class _HomeState extends State<Home> {
                             : RoomView();
                     break;
                   case Routes.ItemManagement:
-                    builder = (BuildContext _) => ItemManagement();
+                    builder = (BuildContext _) =>
+                        AdminItemManagement.ItemManagement();
                     break;
                   case Routes.StaffManagement:
                     builder = (BuildContext _) => StaffManagement();

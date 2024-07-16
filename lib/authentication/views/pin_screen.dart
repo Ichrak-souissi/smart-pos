@@ -1,7 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/widgets/number_buttom.dart';
 import 'package:pos/authentication/widgets/shimmer.dart';
 

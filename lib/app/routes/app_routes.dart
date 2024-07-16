@@ -1,8 +1,5 @@
 // ignore_for_file: constant_identifier_names
 
-import 'package:pos/admin/item_management.dart';
-import 'package:pos/admin/staff_management.dart';
-
 class Routes {
   static const HOME = '/home';
   // ignore: duplicate_ignore

@@ -56,7 +56,7 @@ dependencies:
   network_to_file_image: ^6.0.1
   flutter_hooks: ^0.20.5
   snackbar: ^1.0.2
-  get: ^4.6.6
+  get: ^4.6.6 # Check for the latest compatible version
 
 dev_dependencies:
   flutter_test:

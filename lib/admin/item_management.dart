@@ -8,6 +8,8 @@ import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class ItemManagement extends StatefulWidget {
+  const ItemManagement({super.key});
+
   @override
   _ItemManagementState createState() => _ItemManagementState();
 }
