@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pie_chart/pie_chart.dart';
-import 'package:pos/category/models/category.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/category/controllers/category_controller.dart';
 
@@ -28,10 +27,8 @@ class CategoryPieChart extends StatelessWidget {
       }
     });
 
-    // Check if dataMap is empty or null
     if (dataMap.isEmpty) {
-      // Show a circular progress indicator while loading
-      return Center(
+      return const Center(
         child: CircularProgressIndicator(),
       );
     }
@@ -48,19 +45,17 @@ class CategoryPieChart extends StatelessWidget {
         Colors.deepPurple,
         Colors.cyanAccent,
         Colors.pink
-      ], // Optional
-      initialAngleInDegree: 0, // Optional
-      //centerText: "Categories", // Optional
-      legendOptions: LegendOptions(
+      ],
+      initialAngleInDegree: 0,
+      legendOptions: const LegendOptions(
         showLegendsInRow: true,
         legendPosition: LegendPosition.bottom,
         showLegends: true,
         legendShape: BoxShape.circle,
-        legendTextStyle: TextStyle(fontSize: 12),
+        legendTextStyle: const TextStyle(fontSize: 12),
       ),
-      chartValuesOptions: ChartValuesOptions(
+      chartValuesOptions: const ChartValuesOptions(
         showChartValuesInPercentage: false,
-        //   showChartValueBackground: true,
         showChartValuesOutside: true,
         decimalPlaces: 0,
       ),

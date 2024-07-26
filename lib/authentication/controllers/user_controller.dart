@@ -58,6 +58,10 @@ class UserController extends GetxController {
     }
   }
 
+  bool doesPinExist(String code) {
+    return users.any((user) => user.code == code);
+  }
+
   Future<User?> updateUser(User user) async {
     try {
       final url = Constants.updateUserUrl(user.id);

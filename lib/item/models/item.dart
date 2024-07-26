@@ -1,3 +1,4 @@
+import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 import 'package:pos/supplement/models/supplement.dart';
 
 class Item {
@@ -33,12 +34,13 @@ class Item {
       name: json["name"] ?? '',
       description: json["description"] ?? '',
       price: (json["price"] ?? 0).toDouble(),
-      imageUrl: json["imageUrl"] ??
-          '', // Mise à jour pour récupérer l'URL depuis JSON
+      imageUrl: json["imageUrl"] ?? '',
       calories: json["calories"] ?? 0,
       isActive: json["isActive"] ?? false,
       categoryId: json["categoryId"] ?? 0,
-      createdAt: DateTime.parse(json["createdAt"] ?? ''),
+      createdAt: json["createdAt"] != null && json["createdAt"] is String
+          ? DateTime.tryParse(json["createdAt"]) ?? DateTime.now()
+          : DateTime.now(),
       discount: json["discount"],
       supplements: (json["supplements"] as List<dynamic>?)
           ?.map((supplementJson) => Supplement.fromJson(supplementJson))
@@ -57,10 +59,34 @@ class Item {
       "isActive": isActive,
       "categoryId": categoryId,
       "discount": discount,
-      "supplements":
-          supplements?.map((supplement) => supplement.toJson()).toList(),
+      //  "supplements":
+      //      supplements?.map((supplement) => supplement.toJson()).toList(),
     };
 
     return json;
+  }
+
+  Item copyWith({
+    int? id,
+    String? name,
+    double? price,
+    int? calories,
+    String? description,
+    String? imageUrl,
+    int? categoryId,
+    DateTime? createdAt,
+    int? discount,
+  }) {
+    return Item(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      calories: calories ?? this.calories,
+      description: description ?? this.description,
+      imageUrl: imageUrl ?? this.imageUrl,
+      categoryId: categoryId ?? this.categoryId,
+      createdAt: createdAt ?? this.createdAt,
+      discount: discount ?? this.discount,
+    );
   }
 }

@@ -17,6 +17,7 @@ class TabContent extends StatefulWidget {
   Map<Item, String> itemNotes = {};
 
   TabContent({
+    super.key,
     required this.orderMap,
     required this.calculateTotal,
     required this.selectedTableId,
@@ -32,8 +33,6 @@ class _TabContentState extends State<TabContent> {
   late final OrderController orderController;
   final RoomController roomController = Get.put(RoomController());
 
-  Map<Item, String> itemNotes = {};
-
   @override
   void initState() {
     super.initState();
@@ -45,7 +44,7 @@ class _TabContentState extends State<TabContent> {
     return orderMap.entries.map((entry) {
       final item = entry.key;
       final quantity = entry.value;
-      final note = itemNotes[item] ?? '';
+      final note = widget.itemNotes[item] ?? '';
       final supplements = item.supplements ?? [];
       return OrderItem(
         categoryId: item.categoryId,
@@ -79,7 +78,7 @@ class _TabContentState extends State<TabContent> {
       _showOrderAlert(context);
     } else {
       if (widget.selectedTableId != null) {
-        await tableController.updateTable(widget.selectedTableId!);
+        await tableController.updateTable(widget.selectedTableId!, true);
 
         List<OrderItem> orderItems = getOrderItemsFromMap(
             widget.orderMap, counterController.counter.value);
@@ -93,31 +92,12 @@ class _TabContentState extends State<TabContent> {
           id: counterController.counter.value,
         );
 
-        print('Order Details:');
-        print('  Table ID: ${order.tableId}');
-        print('  Total: ${order.total}');
-        print('  Cooking Status: ${order.status}');
-        print('  Order ID: ${order.id}');
-        print('  Created At: ${order.createdAt}');
-        print('  Order Items: ${order.orderItems.length}');
-        for (var orderItem in order.orderItems) {
-          print('    Item: ${orderItem.name}');
-          print('      Quantity: ${orderItem.quantity}');
-          print('      Price: ${orderItem.price}');
-          print('      Note: ${orderItem.note}');
-          if (orderItem.selectedSupplements != null) {
-            for (var supplement in orderItem.selectedSupplements!) {
-              print('      Supplement: ${supplement['name']}');
-              print('        Price: ${supplement['price']}');
-            }
-          }
-        }
         await orderController.addOrder(order);
         setState(() {
           widget.orderMap.clear();
         });
-        await roomController
-            .initialized; // Attendre l'initialisation de la salle
+        await roomController.tableList;
+        Navigator.of(context).pop();
       }
     }
   }
@@ -127,15 +107,15 @@ class _TabContentState extends State<TabContent> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Attention'),
-          content: Text(
+          title: const Text('Attention'),
+          content: const Text(
               'Veuillez sélectionner des produits pour passer une commande'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: Text('Ok'),
+              child: const Text('Ok'),
             ),
           ],
         );
@@ -143,59 +123,45 @@ class _TabContentState extends State<TabContent> {
     );
   }
 
+  void _updateItemQuantity(Item item, int newQuantity) {
+    setState(() {
+      widget.orderMap[item] = newQuantity;
+    });
+  }
+
+  void _updateItemNote(Item item, String newNote) {
+    setState(() {
+      widget.itemNotes[item] = newNote;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final RoomController _roomController = Get.put(RoomController());
     final subTotal = widget.calculateTotal(widget.orderMap);
-    double totalPrice = 0;
 
     return Expanded(
       child: Obx(() {
-        if (_roomController.isLoading.value ||
-            tableController.isLoading.value) {
-          return Center(
+        if (roomController.isLoading.value || tableController.isLoading.value) {
+          return const Center(
             child: CircularProgressIndicator(),
           );
         } else {
           return Column(
             children: [
-              Container(
-                height: 40,
-                decoration: BoxDecoration(
-                  color: AppTheme.lightTheme.primaryColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16),
-                      child: Text(
-                        'Commande N° #00${counterController.counter}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(right: 10),
-                      child: SizedBox(),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(color: Colors.grey.shade100),
               Padding(
-                padding: const EdgeInsets.all(6.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     color: AppTheme.lightTheme.primaryColor,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      const BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8.0,
+                        offset: Offset(0, 4),
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -203,234 +169,180 @@ class _TabContentState extends State<TabContent> {
                       Text(
                         'Table N° : ${widget.selectedTableId}',
                         style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            fontStyle: FontStyle.italic,
-                            color: Colors.white),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
+              Divider(color: Colors.grey.shade200),
               Flexible(
                 child: widget.orderMap.isEmpty
-                    ? ListView(
-                        children: [
-                          Text(
-                            'Aucun Produit ! Sélectionnez les produits pour passer une commande ',
-                            style: TextStyle(
-                              color: Colors.grey,
-                              fontSize: 16,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                          SizedBox(height: 20),
-                        ],
+                    ? const Center(
+                        child: Text(
+                          'Aucun produit sélectionné.',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
                       )
                     : ListView.builder(
                         itemCount: widget.orderMap.length,
                         itemBuilder: (context, index) {
                           final item = widget.orderMap.keys.elementAt(index);
-                          final quantity = widget.orderMap[item];
-                          final price = item.price;
-                          totalPrice = price * quantity!;
-                          final note = itemNotes[item] ?? '';
+                          final quantity = widget.orderMap[item]!;
+                          final totalPrice = item.price * quantity;
+                          final note = widget.itemNotes[item] ?? '';
                           final supplements = item.supplements ?? [];
 
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Card(
-                              color: Colors.white,
-                              elevation: 1,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                                side: const BorderSide(
-                                  color: Colors.black12,
-                                  width: 0.5,
+                          return Dismissible(
+                            key: Key(item.id.toString()), // Ensure unique key
+                            onDismissed: (direction) {
+                              // Handle the removal
+                              setState(() {
+                                widget.orderMap.remove(item);
+                              });
+                            },
+                            background: Container(
+                              color: Colors.red,
+                              child: const Align(
+                                alignment: Alignment.centerRight,
+                                child: Padding(
+                                  padding: EdgeInsets.all(16.0),
+                                  child: Icon(
+                                    Icons.delete,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  ListTile(
-                                    title: Column(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Text(
-                                              item.name,
-                                              overflow: TextOverflow.ellipsis,
-                                              style:
-                                                  const TextStyle(fontSize: 16),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Card(
+                                color: Colors.white,
+                                elevation: 4,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    ListTile(
+                                      leading: item.imageUrl != null
+                                          ? CircleAvatar(
+                                              radius: 40,
+                                              backgroundImage:
+                                                  NetworkImage(item.imageUrl),
+                                            )
+                                          : const CircleAvatar(
+                                              radius: 30,
+                                              child:
+                                                  Icon(Icons.image, size: 30),
                                             ),
-                                            Text(
-                                              '${(totalPrice).toStringAsFixed(2)} dt',
-                                              style:
-                                                  const TextStyle(fontSize: 16),
-                                            ),
-                                          ],
+                                      title: Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment
-                                                      .spaceBetween,
-                                              children: [
-                                                Text('Qte:'),
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons.remove,
-                                                    size: 15,
-                                                    color: const Color.fromARGB(
-                                                        255, 142, 107, 3),
-                                                  ),
-                                                  onPressed: () {
-                                                    if (quantity > 1) {
-                                                      setState(() {
-                                                        widget.orderMap[item] =
-                                                            quantity - 1;
-                                                      });
-                                                    }
-                                                  },
-                                                ),
-                                                Text(
-                                                  ' $quantity',
-                                                  style: const TextStyle(
-                                                      fontSize: 15),
-                                                ),
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons.add,
-                                                    size: 15,
-                                                    color: const Color.fromARGB(
-                                                        255, 142, 107, 3),
-                                                  ),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      widget.orderMap[item] =
-                                                          quantity + 1;
-                                                    });
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                            GestureDetector(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    String tempNote = note;
-                                                    return AlertDialog(
-                                                      title: Text(note.isEmpty
-                                                          ? 'Ajouter une note'
-                                                          : 'Modifier la note'),
-                                                      content: TextField(
-                                                        onChanged: (value) {
-                                                          tempNote = value;
-                                                        },
-                                                        decoration:
-                                                            InputDecoration(
-                                                          hintText:
-                                                              'Saisissez votre note',
-                                                        ),
-                                                        controller:
-                                                            TextEditingController(
-                                                                text: note),
-                                                      ),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            setState(() {
-                                                              itemNotes[item] =
-                                                                  tempNote;
-                                                            });
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child: Text('Ok'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: Text(
-                                                note.isEmpty
-                                                    ? 'ajouter note'
-                                                    : 'note',
-                                                style: TextStyle(
-                                                  color: Color.fromARGB(
-                                                      255, 14, 106, 182),
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                    subtitle: Padding(
-                                      padding: const EdgeInsets.only(top: 2),
-                                      child: Row(
+                                      ),
+                                      subtitle: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            'Suppléments:',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                            ),
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: [
+                                              Row(
+                                                children: [
+                                                  IconButton(
+                                                    icon: const Icon(
+                                                        Icons.remove),
+                                                    onPressed: () {
+                                                      if (quantity > 1) {
+                                                        _updateItemQuantity(
+                                                            item, quantity - 1);
+                                                      }
+                                                    },
+                                                  ),
+                                                  Text(
+                                                    '$quantity',
+                                                    style: const TextStyle(
+                                                        fontSize: 14),
+                                                  ),
+                                                  IconButton(
+                                                    icon: const Icon(Icons.add),
+                                                    onPressed: () {
+                                                      _updateItemQuantity(
+                                                          item, quantity + 1);
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                              Text(
+                                                '${totalPrice.toStringAsFixed(2)} dt',
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                              ),
+                                            ],
                                           ),
-                                          Flexible(
-                                            child: Wrap(
-                                              direction: Axis.horizontal,
-                                              spacing: 6,
-                                              runSpacing: 3,
-                                              children:
-                                                  supplements.map((supplement) {
-                                                return Chip(
+                                          TextFormField(
+                                            initialValue: note,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Note',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            onChanged: (newNote) {
+                                              _updateItemNote(item, newNote);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    if (supplements.isNotEmpty)
+                                      Padding(
+                                        padding: const EdgeInsets.all(4.0),
+                                        child: SizedBox(
+                                          height: 30,
+                                          child: ListView.builder(
+                                            scrollDirection: Axis.horizontal,
+                                            itemCount: supplements.length,
+                                            itemBuilder: (context, index) {
+                                              final supplement =
+                                                  supplements[index];
+                                              return Padding(
+                                                padding: const EdgeInsets.only(
+                                                    right: 4.0),
+                                                child: Chip(
                                                   label: Text(
                                                     supplement.name,
-                                                    style: TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 12,
-                                                      //  overflow:
-                                                      //TextOverflow.ellipsis,
-                                                    ),
-                                                    maxLines: 2,
+                                                    style: const TextStyle(
+                                                        color: Colors.white),
                                                   ),
+                                                  side: BorderSide.none,
                                                   backgroundColor:
-                                                      Color.fromARGB(
-                                                          255, 229, 159, 85),
-                                                  shape: RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            8),
-                                                    side: BorderSide(
+                                                      const Color.fromARGB(
+                                                          255, 231, 29, 69),
+                                                  deleteIcon: const Icon(
+                                                      Icons.remove,
                                                       color: Colors.white,
-                                                    ),
-                                                  ),
+                                                      size: 18),
                                                   onDeleted: () {
                                                     _handleSupplementRemove(
                                                         context,
                                                         item,
                                                         supplement);
                                                   },
-                                                );
-                                              }).toList(),
-                                            ),
+                                                ),
+                                              );
+                                            },
                                           ),
-                                        ],
+                                        ),
                                       ),
-                                    ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           );
@@ -438,90 +350,55 @@ class _TabContentState extends State<TabContent> {
                       ),
               ),
               Padding(
-                padding: const EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(12.0),
                 child: Container(
+                  padding: const EdgeInsets.all(12.0),
                   decoration: BoxDecoration(
                     color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding: const EdgeInsets.all(8.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Sous-total:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text('${subTotal.toStringAsFixed(2)} dt'),
-                        ],
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      const BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4.0,
+                        offset: Offset(0, 2),
                       ),
-                      const SizedBox(height: 10),
-                      Divider(color: Colors.grey.shade300),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text(
                             'Total:',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text('${subTotal.toStringAsFixed(2)} dt'),
+                          Text(
+                            '${subTotal.toStringAsFixed(2)} dt',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ],
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: ElevatedButton(
+                          onPressed: () => _handleOrderSubmit(context),
+                          child: Text(
+                            'Passer la commande',
+                            style: TextStyle(
+                                color: AppTheme.lightTheme.primaryColor),
+                          ),
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
-              SizedBox(height: 10),
-              Padding(
-                padding: const EdgeInsets.all(10.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          widget.orderMap.clear();
-                          itemNotes.clear();
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.redAccent,
-                        backgroundColor: Colors.redAccent,
-                      ),
-                      child: const Text(
-                        'Supprimer',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () => _handleOrderSubmit(context),
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Color.fromARGB(255, 221, 136, 9),
-                        backgroundColor: Color.fromARGB(255, 221, 136, 9),
-                      ),
-                      child: const Text(
-                        'Commander',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],

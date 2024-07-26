@@ -1,7 +1,6 @@
 import 'package:get/get.dart';
 import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/category/controllers/category_controller.dart';
-import 'package:pos/category/models/category.dart';
 import 'package:pos/constants.dart';
 import 'package:pos/order-item/models/order-item.dart';
 
@@ -45,15 +44,31 @@ class OrderItemController extends GetxController {
   void findMostOrderedItems(List<OrderItem> orderItems) {
     try {
       if (orderItems.isNotEmpty) {
-        orderItems.sort((a, b) => b.quantity.compareTo(a.quantity));
-        mostOrderedItems.assignAll(orderItems);
+        // Regrouper les articles par nom pour totaliser les quantités
+        final Map<String, OrderItem> itemMap = {};
+
+        for (var item in orderItems) {
+          if (itemMap.containsKey(item.name)) {
+            // Ajouter la quantité à celle déjà existante
+            itemMap[item.name]!.quantity += item.quantity;
+          } else {
+            // Ajouter l'article au map si ce n'est pas encore présent
+            itemMap[item.name] = item;
+          }
+        }
+
+        // Convertir le map en liste et trier par quantité décroissante
+        final List<OrderItem> sortedOrderItems = itemMap.values.toList();
+        sortedOrderItems.sort((a, b) => b.quantity.compareTo(a.quantity));
+
+        mostOrderedItems.assignAll(sortedOrderItems);
 
         print('Articles les plus commandés :');
         for (var item in mostOrderedItems) {
           print('Nom: ${item.name}, Quantité: ${item.quantity}');
         }
       } else {
-        //mostOrderedItems.clear();
+        mostOrderedItems.clear(); // Vider la liste si aucun article
         print('Aucun article commandé pour le moment.');
       }
     } catch (e) {
@@ -111,7 +126,6 @@ class OrderItemController extends GetxController {
             .toList();
         orderItems.assignAll(orderItemsList);
         findMostOrderedItems(orderItemsList);
-
         return orderItemsList;
       } else {
         throw Exception('Failed to load order items for orderId: $orderId');

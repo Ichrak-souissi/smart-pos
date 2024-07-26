@@ -11,11 +11,10 @@ import 'package:pos/waiter/room_view.dart';
 import 'package:pos/admin/room_view_admin.dart';
 import 'package:pos/app/routes/app_routes.dart';
 import 'package:pos/shared/icon_buttom.dart';
-import 'package:pos/admin/item_management.dart'
-    as AdminItemManagement; // Alias added
+import 'package:pos/admin/item_management.dart';
 
 class Home extends StatefulWidget {
-  const Home({Key? key}) : super(key: key); // Fix typo in super constructor
+  const Home({super.key});
 
   @override
   _HomeState createState() => _HomeState();
@@ -73,8 +72,8 @@ class _HomeState extends State<Home> {
         _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
           pageBuilder: (context, animation1, animation2) =>
               (storage.read('userRole') == 'admin')
-                  ? RoomViewAdmin()
-                  : RoomView(),
+                  ? const RoomViewAdmin()
+                  : const RoomView(),
           transitionDuration: Duration.zero,
           reverseTransitionDuration: Duration.zero,
         ));
@@ -82,8 +81,7 @@ class _HomeState extends State<Home> {
       case 2:
         if (storage.read('userRole') == 'admin') {
           _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                AdminItemManagement.ItemManagement(),
+            pageBuilder: (context, animation1, animation2) => ItemManagement(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ));
@@ -99,7 +97,8 @@ class _HomeState extends State<Home> {
       case 3:
         if (storage.read('userRole') == 'admin') {
           _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => StaffManagement(),
+            pageBuilder: (context, animation1, animation2) =>
+                const StaffManagement(),
             transitionDuration: Duration.zero,
             reverseTransitionDuration: Duration.zero,
           ));
@@ -130,7 +129,7 @@ class _HomeState extends State<Home> {
     final userRole = storage.read('userRole') ?? '';
 
     if (userRole.isEmpty) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(
           child: Text("Unauthorized access"),
         ),
@@ -207,7 +206,7 @@ class _HomeState extends State<Home> {
       body: Row(
         key: const ValueKey('home'),
         children: [
-          SizedBox(
+          const SizedBox(
             height: 10,
           ),
           Expanded(
@@ -243,15 +242,14 @@ class _HomeState extends State<Home> {
                   case Routes.RoomManagement:
                     builder = (BuildContext _) =>
                         (storage.read('userRole') == 'admin')
-                            ? RoomViewAdmin()
-                            : RoomView();
+                            ? const RoomViewAdmin()
+                            : const RoomView();
                     break;
                   case Routes.ItemManagement:
-                    builder = (BuildContext _) =>
-                        AdminItemManagement.ItemManagement();
+                    builder = (BuildContext _) => ItemManagement();
                     break;
                   case Routes.StaffManagement:
-                    builder = (BuildContext _) => StaffManagement();
+                    builder = (BuildContext _) => const StaffManagement();
                     break;
                   default:
                     builder = (BuildContext _) => DashboardPage();
@@ -260,7 +258,7 @@ class _HomeState extends State<Home> {
                 if (userRole != 'admin' && settings.name == Routes.Dashboard) {
                   return PageRouteBuilder(
                     pageBuilder: (context, animation1, animation2) =>
-                        RoomView(),
+                        const RoomView(),
                     transitionDuration: Duration.zero,
                     reverseTransitionDuration: Duration.zero,
                   );

@@ -19,15 +19,13 @@ class CategoryController extends GetxController {
     getCategoryList();
   }
 
-  Future<List<Category>> getCategoryList() async {
+  Future<void> getCategoryList() async {
     try {
       isLoading.value = true;
       final response = await _clientDio.dio.get(
         Constants.getCategoryUrl(),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
       if (response.statusCode == 200) {
@@ -35,15 +33,13 @@ class CategoryController extends GetxController {
         final List<Category> categories = categoriesJson
             .map((categoryJson) => Category.fromJson(categoryJson))
             .toList();
-
         categoryList.assignAll(categories);
-        return categoryList;
       } else {
-        return [];
+        // Handle non-200 responses if needed
       }
     } catch (e) {
       print('Error fetching categories: $e');
-      rethrow;
+      // Optionally handle or show error
     } finally {
       isLoading.value = false;
     }
@@ -51,25 +47,21 @@ class CategoryController extends GetxController {
 
   Future<void> deleteCategory(Category category) async {
     try {
-      print('Deleting category with ID: ${category.id}');
       final response = await _clientDio.dio.delete(
         Constants.deleteCategoryUrl(category.id.toString()),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
-
       if (response.statusCode == 200) {
         categoryList.remove(category);
-        print('Category deleted successfully');
+        // Show success message or feedback
       } else {
-        print('Failed to delete category: ${response.statusCode}');
-        print('Response data: ${response.data}');
+        // Handle non-200 responses if needed
       }
     } catch (e) {
       print('Error deleting category: $e');
+      // Optionally handle or show error
     }
   }
 
@@ -81,33 +73,28 @@ class CategoryController extends GetxController {
     }
   }
 
-  Future<List<Item>> getItemsByCategoryId(int categoryId) async {
+  Future<void> getItemsByCategoryId(int categoryId) async {
     try {
       isLoading.value = true;
       final response = await _clientDio.dio.get(
         Constants.getItemsByCategoryIdUrl(categoryId.toString()),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
       if (response.statusCode == 200) {
         final List<dynamic> itemsJson = response.data;
         final List<Item> items =
             itemsJson.map((itemJson) => Item.fromJson(itemJson)).toList();
-
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-
         originalItems = List.from(items);
         categoryItems.assignAll(items);
-        return items;
       } else {
-        return [];
+        // Handle non-200 responses if needed
       }
     } catch (e) {
       print('Error fetching items by category ID: $e');
-      rethrow;
+      // Optionally handle or show error
     } finally {
       isLoading.value = false;
     }
@@ -128,47 +115,38 @@ class CategoryController extends GetxController {
         Constants.addItemUrl(),
         data: newItem.toJson(),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
       if (response.statusCode == 201) {
         categoryItems.add(newItem);
+        // Show success message or feedback
       } else {
-        print('Failed to add new item: ${response.statusCode}');
+        // Handle non-201 responses if needed
       }
     } catch (e) {
       print('Error adding new item: $e');
+      // Optionally handle or show error
     }
   }
 
   Future<void> deleteItem(int itemId) async {
     try {
-      print('Deleting item with ID: ${itemId}');
-      print(
-          'Delete request URL: ${Constants.deleteItemUrl(itemId.toString())}');
-
       final response = await _clientDio.dio.delete(
         Constants.deleteItemUrl(itemId.toString()),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
-
       if (response.statusCode == 200) {
-        categoryItems.remove(itemId);
-        print('Item deleted successfully');
-
-        //await getItemsByCategoryId(item.categoryId);
+        categoryItems.removeWhere((item) => item.id == itemId);
+        // Show success message or feedback
       } else {
-        print('Failed to delete item: ${response.statusCode}');
-        print('Response data: ${response.data}');
+        // Handle non-200 responses if needed
       }
     } catch (e) {
       print('Error deleting item: $e');
+      // Optionally handle or show error
     }
   }
 
@@ -193,18 +171,18 @@ class CategoryController extends GetxController {
         Constants.addCategoryUrl(),
         data: newCategory.toJson(),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
       if (response.statusCode == 201) {
         categoryList.add(newCategory);
+        // Show success message or feedback
       } else {
-        print('Failed to add new category: ${response.statusCode}');
+        // Handle non-201 responses if needed
       }
     } catch (e) {
       print('Error adding new category: $e');
+      // Optionally handle or show error
     }
   }
 }

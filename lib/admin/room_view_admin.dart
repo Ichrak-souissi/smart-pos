@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
-import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
@@ -9,6 +8,8 @@ import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/models/room.dart';
 import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/table/models/table.dart' as Table;
+import 'package:pos/table/views/table_detail_dialog.dart';
+import 'package:pos/table/widgets/cicular_table.dart';
 
 class RoomViewAdmin extends StatefulWidget {
   const RoomViewAdmin({Key? key}) : super(key: key);
@@ -20,8 +21,6 @@ class RoomViewAdmin extends StatefulWidget {
 class _RoomViewState extends State<RoomViewAdmin> {
   final RoomController roomController = Get.put(RoomController());
   final OrderController orderController = Get.put(OrderController());
-  final OrderItemController orderItemController =
-      Get.put(OrderItemController());
 
   int selectedRoomIndex = 0;
   var selectedTable;
@@ -62,22 +61,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
 
   Future<void> _loadOrdersAndItemsByTableId(int tableId) async {
     try {
-      await orderController.fetchOrdersByTableId(tableId.toString());
       ordersForSelectedTable.assignAll(orderController.orders
           .where((order) => order.tableId == tableId)
           .toList());
-
-      List<OrderItem> loadedOrderItems = [];
-      for (var order in ordersForSelectedTable) {
-        await orderItemController.fetchOrderItemsByOrderId(order.id.toString());
-        loadedOrderItems.addAll(orderItemController.orderItems);
-      }
-
-      orderItems.assignAll(loadedOrderItems);
-      orderItems.forEach((orderItem) {
-        print(
-            'Order Item: ${orderItem.name}, Quantity: ${orderItem.quantity}, Price: ${orderItem.price}, Note: ${orderItem.note}');
-      });
     } catch (e) {
       print('Error loading orders and items: $e');
     }
@@ -92,9 +78,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
             return AlertDialog(
-              title: Text('Ajouter une table'),
+              title: const Text('Ajouter une table'),
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
               content: Form(
                 key: _formKey,
                 child: Column(
@@ -114,7 +100,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                 child: Text(room.name),
                               ))
                           .toList(),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Sélectionner une salle',
                       ),
                       validator: (value) {
@@ -124,11 +110,11 @@ class _RoomViewState extends State<RoomViewAdmin> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     TextFormField(
                       controller: tableCapacityController,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Capacité de la table',
                       ),
                       validator: (value) {
@@ -138,11 +124,11 @@ class _RoomViewState extends State<RoomViewAdmin> {
                         return null;
                       },
                     ),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     TextFormField(
                       controller: tablePositionController,
                       keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Position',
                       ),
                       validator: (value) {
@@ -157,13 +143,19 @@ class _RoomViewState extends State<RoomViewAdmin> {
               ),
               actions: <Widget>[
                 TextButton(
-                  child: Text('Annuler'),
+                  child: const Text(
+                    'Annuler',
+                    style: TextStyle(color: Colors.redAccent),
+                  ),
                   onPressed: () {
                     Navigator.of(context).pop();
                   },
                 ),
                 TextButton(
-                  child: Text('Ajouter'),
+                  child: Text(
+                    'Ajouter',
+                    style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+                  ),
                   onPressed: () async {
                     if (_formKey.currentState!.validate()) {
                       int newPosition =
@@ -187,12 +179,12 @@ class _RoomViewState extends State<RoomViewAdmin> {
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('Erreur'),
-                              content: Text(
+                              title: const Text('Erreur'),
+                              content: const Text(
                                   'Une table existe déjà à cette position.'),
                               actions: <Widget>[
                                 TextButton(
-                                  child: Text('OK'),
+                                  child: const Text('OK'),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
@@ -201,18 +193,18 @@ class _RoomViewState extends State<RoomViewAdmin> {
                             );
                           },
                         );
-                      } else if (tableCountInRoom >= maxTablesInRoom) {
+                      } else if (tableCountInRoom < maxTablesInRoom) {
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: Text('Erreur'),
+                              title: const Text('Erreur'),
                               content: Text(
                                 'Le nombre de tables dans la salle ${roomController.roomList[selectedRoomIndex].name} a atteint la limite maximale.',
                               ),
                               actions: <Widget>[
                                 TextButton(
-                                  child: Text('OK'),
+                                  child: const Text('OK'),
                                   onPressed: () {
                                     Navigator.of(context).pop();
                                   },
@@ -231,17 +223,14 @@ class _RoomViewState extends State<RoomViewAdmin> {
                           orders: [],
                           id: 0,
                         );
-
-                        try {
-                          roomController.addTable(table);
+                        roomController.tableList.add(table);
+                        roomController.addTable(table);
+                        setState(() {
                           roomController.roomList[selectedRoomIndex].tables
                               .add(table);
-
-                          tableCountInRoom++;
-                          Navigator.of(context).pop();
-                        } catch (e) {
-                          print('Error adding table: $e');
-                        }
+                        });
+                        tableCountInRoom++;
+                        Navigator.of(context).pop();
                       }
                     }
                   },
@@ -261,7 +250,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Ajouter une salle'),
+          title: const Text('Ajouter une salle'),
           content: Form(
             key: _formKey,
             child: Column(
@@ -269,7 +258,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
               children: [
                 TextFormField(
                   controller: roomNameController,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Nom de la salle',
                   ),
                   validator: (value) {
@@ -279,11 +268,11 @@ class _RoomViewState extends State<RoomViewAdmin> {
                     return null;
                   },
                 ),
-                SizedBox(height: 10),
+                const SizedBox(height: 10),
                 TextFormField(
                   controller: numberOfTablesController,
                   keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
+                  decoration: const InputDecoration(
                     hintText: 'Nombre de tables',
                   ),
                   validator: (value) {
@@ -298,13 +287,19 @@ class _RoomViewState extends State<RoomViewAdmin> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Annuler'),
+              child: const Text(
+                'Annuler',
+                style: TextStyle(color: Colors.redAccent),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Ajouter'),
+              child: Text(
+                'Ajouter',
+                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+              ),
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   var room = Room(
@@ -317,318 +312,10 @@ class _RoomViewState extends State<RoomViewAdmin> {
 
                   roomController.addRoom(room);
                   roomController.roomList.add(room);
+
                   Navigator.of(context).pop();
                 }
               },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showTableDetailsDialog(Table.Table table) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          contentPadding: EdgeInsets.symmetric(horizontal: 5, vertical: 5),
-          content: Container(
-            width: double.minPositive,
-            child: ListView(
-              children: [
-                SizedBox(height: 15),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: AppTheme.lightTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: EdgeInsets.all(10),
-                        child: Text(
-                          'Table N°${selectedTable.position}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Capacité: ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Text(
-                            '${selectedTable.capacity}',
-                            style: TextStyle(fontSize: 18),
-                          ),
-                          Icon(
-                            Icons.person_3_outlined,
-                            size: 20,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(6.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'État: ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '${selectedTable.active ? 'Occupé' : 'Disponible'}',
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(height: 10),
-                for (var order in ordersForSelectedTable)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Text(
-                          'Commande #000${order.id}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      if (order.status == 1)
-                        Padding(
-                          padding: const EdgeInsets.all(6.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Statut: ',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.redAccent,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text('En cours'),
-                            ],
-                          ),
-                        ),
-                      SizedBox(height: 15),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Text(
-                                'Article',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 5,
-                              child: Center(
-                                child: Text(
-                                  'Quantité',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: Center(
-                                child: Text(
-                                  'Prix',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 4,
-                              child: Center(
-                                child: Text(
-                                  'Note',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      for (var orderItem in orderItems
-                          .where((orderItem) => orderItem.orderId == order.id))
-                        Column(
-                          children: [
-                            Card(
-                              color: Color.fromARGB(225, 255, 255, 255),
-                              margin: const EdgeInsets.symmetric(vertical: 5.0),
-                              elevation: 1,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Column(
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 5,
-                                          child: Center(
-                                            child: Text(
-                                              '${orderItem.name}',
-                                              style: TextStyle(fontSize: 14),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 4,
-                                          child: Center(
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                Text(
-                                                  '${orderItem.quantity}',
-                                                  style: TextStyle(
-                                                    fontSize: 14,
-                                                    color: Colors.black,
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 4,
-                                          child: Center(
-                                            child: Text(
-                                              '${orderItem.price * orderItem.quantity}dt',
-                                              style: TextStyle(fontSize: 15),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 4,
-                                          child: Center(
-                                            child: InkWell(
-                                              onTap: () {
-                                                showDialog(
-                                                  context: context,
-                                                  builder:
-                                                      (BuildContext context) {
-                                                    return AlertDialog(
-                                                      title: Text('Note'),
-                                                      content:
-                                                          Text(orderItem.note),
-                                                      actions: [
-                                                        TextButton(
-                                                          onPressed: () {
-                                                            Navigator.pop(
-                                                                context);
-                                                          },
-                                                          child: Text('Fermer'),
-                                                        ),
-                                                      ],
-                                                    );
-                                                  },
-                                                );
-                                              },
-                                              child: Text(
-                                                'Note',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: Color.fromARGB(
-                                                      255, 11, 57, 94),
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.only(left: 2),
-                                    child: Wrap(
-                                      spacing: 2.0,
-                                      runSpacing: 2.0,
-                                      children: [
-                                        for (var supplement
-                                            in orderItem.selectedSupplements)
-                                          Text(
-                                            '+${supplement['name']}',
-                                            style: TextStyle(fontSize: 14),
-                                          ),
-                                      ],
-                                    ),
-                                  )
-                                ],
-                              ),
-                            ),
-                            SizedBox(height: 10),
-                          ],
-                        ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            'Total: ${order.total}',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                    ],
-                  ),
-                SizedBox(height: 10),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Fermer'),
             ),
           ],
         );
@@ -641,7 +328,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Supprimer la salle'),
+          title: const Text('Supprimer la salle'),
           content: Text(
               'Êtes-vous sûr de vouloir supprimer la salle ${room.name} ?'),
           actions: <Widget>[
@@ -649,7 +336,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
             TextButton(
               onPressed: () async {
@@ -657,14 +344,14 @@ class _RoomViewState extends State<RoomViewAdmin> {
                 _loadRoomTables(room.id);
                 Navigator.of(context).pop();
 
-                //  Get.snackbar(
-                //    'Succès',
-                //   'La salle ${room.name} a été supprimée avec succès.',
-                //  snackPosition: SnackPosition.BOTTOM,
-                // duration: Duration(seconds: 3),
-                //);
+                Get.snackbar(
+                  'Succès',
+                  'La salle ${room.name} a été supprimée avec succès.',
+                  snackPosition: SnackPosition.BOTTOM,
+                  duration: const Duration(seconds: 3),
+                );
               },
-              child: Text('Supprimer'),
+              child: const Text('Supprimer'),
             ),
           ],
         );
@@ -683,7 +370,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
               flex: 5,
               child: Column(
                 children: [
-                  AppBarWidget(),
+                  const AppBarWidget(),
                   Padding(
                     padding: const EdgeInsets.only(top: 8, right: 8, left: 8),
                     child: Row(
@@ -712,14 +399,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                           style: TextStyle(fontSize: 15),
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
+                        const Spacer(),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: Row(
@@ -730,6 +410,8 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                   .map((entry) {
                                 int index = entry.key;
                                 Room room = entry.value;
+                                bool isSelected = index == selectedRoomIndex;
+
                                 return GestureDetector(
                                   onTap: () {
                                     setState(() {
@@ -741,14 +423,14 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                     margin: const EdgeInsets.only(right: 8.0),
                                     padding: const EdgeInsets.all(8.0),
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(12),
+                                      color: isSelected
+                                          ? AppTheme.lightTheme.primaryColor
+                                          : Colors.white,
                                       border: Border.all(
-                                        color: selectedRoomIndex == index
-                                            ? Colors.green
-                                            : Colors.grey.shade300,
-                                        width: 2,
+                                        color: AppTheme.lightTheme.primaryColor,
+                                        width: isSelected ? 0 : 1,
                                       ),
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
                                     child: Row(
                                       mainAxisAlignment:
@@ -757,21 +439,22 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                         Text(
                                           room.name,
                                           style: TextStyle(
-                                            color: selectedRoomIndex == index
-                                                ? Colors.black
+                                            color: isSelected
+                                                ? Colors.white
                                                 : Colors.black,
                                             fontWeight: FontWeight.bold,
                                           ),
                                         ),
-                                        GestureDetector(
-                                          onTap: () =>
-                                              _showDeleteRoomDialog(room),
-                                          child: Icon(
-                                            Icons.close,
-                                            color: Colors.redAccent,
-                                            size: 15,
+                                        if (isSelected)
+                                          GestureDetector(
+                                            onTap: () =>
+                                                _showDeleteRoomDialog(room),
+                                            child: const Icon(
+                                              Icons.close,
+                                              color: Colors.white,
+                                              size: 15,
+                                            ),
                                           ),
-                                        ),
                                       ],
                                     ),
                                   ),
@@ -784,15 +467,14 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                   padding: const EdgeInsets.all(7.0),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: Colors.grey.shade300,
-                                      width: 2,
-                                    ),
+                                        color: AppTheme.lightTheme.primaryColor,
+                                        width: 1),
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Icon(
                                     Icons.add,
-                                    color: Colors.black,
+                                    color: AppTheme.lightTheme.primaryColor,
                                   ),
                                 ),
                               ),
@@ -800,6 +482,12 @@ class _RoomViewState extends State<RoomViewAdmin> {
                           ),
                         ),
                       ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(6.0),
+                    child: Row(
+                      children: [],
                     ),
                   ),
                   Expanded(
@@ -810,10 +498,10 @@ class _RoomViewState extends State<RoomViewAdmin> {
                         );
                       } else {
                         return Padding(
-                          padding: const EdgeInsets.all(8.0),
+                          padding: const EdgeInsets.all(1.0),
                           child: GridView.builder(
                             gridDelegate:
-                                SliverGridDelegateWithFixedCrossAxisCount(
+                                const SliverGridDelegateWithFixedCrossAxisCount(
                               crossAxisCount: 5,
                               mainAxisSpacing: 2.0,
                               crossAxisSpacing: 2.0,
@@ -824,53 +512,30 @@ class _RoomViewState extends State<RoomViewAdmin> {
                               final table = roomController.tableList[index];
                               Color borderColor;
                               if (table.active) {
-                                borderColor = AppTheme.lightTheme.primaryColor;
+                                borderColor =
+                                    const Color.fromARGB(255, 101, 210, 105);
                               } else {
-                                borderColor = Colors.blueGrey;
+                                borderColor =
+                                    const Color.fromARGB(255, 127, 150, 161);
                               }
                               return GestureDetector(
                                 onTap: () {
                                   if (table.active) {
                                     setState(() {
                                       selectedTable = table;
-                                      _showTableDetailsDialog(selectedTable);
+                                      TableDetailsDialog(
+                                        context,
+                                        ordersForSelectedTable,
+                                      ).show(selectedTable);
                                       _loadOrdersAndItemsByTableId(
                                           selectedTable.id);
                                     });
                                   }
                                 },
-                                child: Container(
-                                  margin: const EdgeInsets.all(8.0),
-                                  padding: const EdgeInsets.all(16.0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: borderColor,
-                                      width: 2,
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Table N° ${table.position}',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        '${table.capacity} places',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                child: CircularTable(
+                                  capacity: table.capacity,
+                                  tableName: ' ${table.position}',
+                                  borderColor: borderColor,
                                 ),
                               );
                             },
@@ -888,7 +553,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTableDialog,
         tooltip: 'Ajouter une table',
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
     );
   }

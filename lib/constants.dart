@@ -35,6 +35,9 @@ class Constants {
   static const String orderItemEndpoint = '/orderItem';
   static const String ordersEndpoint = '/order';
 
+//  Enpoints pour la gestion des payements
+  static const String paymentEndpoint = '/payment';
+
   // URLs pour les endpoints liés aux tables
   static String getBaseUrl() => baseUrl;
   static String getLoginUrl() => '$baseUrl$loginEndpoint';
@@ -97,7 +100,7 @@ class Constants {
   static String deleteItemUrl(String id) => '$baseUrl$itemEndpoint/$id';
   static String addCategoryUrl() => '$baseUrl$categoryEndpoint/add';
 
-  static String updateItemUrl(String id) => '$baseUrl$itemEndpoint/{id}';
+  static String updateItemUrl(String id) => '$baseUrl/item/$id';
 
   static updateUserUrl(int id) => '$baseUrl/users/$id';
 
@@ -106,4 +109,13 @@ class Constants {
   static String deleteCategoryUrl(String id) => '$baseUrl$categoryEndpoint/$id';
 
   static String deleteRoomUrl(String id) => '$baseUrl$roomEndpoint/$id';
+
+  static String updateSupplementUrl(String id) =>
+      '$baseUrl$supplementEndpoint/$id';
+
+  static String deleteSupplementUrl(String id) =>
+      '$baseUrl$supplementEndpoint/$id';
+// Urls pour les endpoints de payements
+  static String addPaymentUrl() => '$baseUrl$paymentEndpoint/add';
+  static String getPayments() => '$baseUrl$paymentEndpoint';
 }

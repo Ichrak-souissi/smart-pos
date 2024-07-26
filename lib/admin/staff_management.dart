@@ -301,6 +301,8 @@ class _StaffManagementState extends State<StaffManagement>
   }
 
   void _showAddUserDialog() {
+    GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -311,63 +313,91 @@ class _StaffManagementState extends State<StaffManagement>
 
         return AlertDialog(
           title: Text('Ajouter un utilisateur'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                TextField(
-                  controller: nameController,
-                  decoration: InputDecoration(labelText: 'Nom'),
-                ),
-                DropdownButtonFormField<String>(
-                  value: selectedRole,
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      selectedRole = newValue!;
-                    });
-                  },
-                  items: <String>['waiter', 'admin', 'chief']
-                      .map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value),
-                    );
-                  }).toList(),
-                  decoration: InputDecoration(labelText: 'Rôle'),
-                ),
-                TextField(
-                  controller: codeController,
-                  decoration: InputDecoration(labelText: 'Code'),
-                ),
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(labelText: 'Téléphone'),
-                  keyboardType: TextInputType.phone,
-                ),
-              ],
+          content: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: ListBody(
+                children: <Widget>[
+                  TextFormField(
+                    controller: nameController,
+                    decoration: InputDecoration(labelText: 'Nom'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Entrer le nom de l\'utilisateur';
+                      }
+                      return null;
+                    },
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: selectedRole,
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedRole = newValue!;
+                      });
+                    },
+                    items: <String>['waiter', 'admin', 'chief']
+                        .map<DropdownMenuItem<String>>((String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value),
+                      );
+                    }).toList(),
+                    decoration: InputDecoration(labelText: 'Rôle'),
+                  ),
+                  TextFormField(
+                    controller: codeController,
+                    decoration: InputDecoration(labelText: 'Code'),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Entrer le code PIN';
+                      } else if (userController.doesPinExist(value)) {
+                        return 'Le code PIN existe déjà';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: phoneController,
+                    decoration: InputDecoration(labelText: 'Téléphone'),
+                    keyboardType: TextInputType.phone,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Entrer le numéro de téléphone';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text('Annuler'),
+              child: Text(
+                'Annuler',
+                style: TextStyle(color: Colors.redAccent),
+              ),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text('Ajouter'),
+              child: Text(
+                'Ajouter',
+                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+              ),
               onPressed: () async {
-                final newUser = User(
-                  id: DateTime.now().millisecondsSinceEpoch,
-                  name: nameController.text,
-                  role: selectedRole,
-                  code: codeController.text,
-                  phone: int.tryParse(phoneController.text) ?? 0,
-                );
-                await userController.addUser(newUser);
-                Navigator.of(context).pop();
-                setState(() {
-                  filteredUsers.add(newUser);
-                });
+                if (_formKey.currentState!.validate()) {
+                  final newUser = User(
+                    id: DateTime.now().millisecondsSinceEpoch,
+                    name: nameController.text,
+                    role: selectedRole,
+                    code: codeController.text,
+                    phone: int.tryParse(phoneController.text) ?? 0,
+                  );
+                  await userController.addUser(newUser);
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],

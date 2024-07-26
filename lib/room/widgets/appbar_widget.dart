@@ -171,9 +171,7 @@ class AppBarWidget extends StatelessWidget {
               child: Text('Tables disponibles'),
             ),
           ],
-          onSelected: (String value) {
-            // Gérer la sélection du menu ici
-          },
+          onSelected: (String value) {},
         ),
       ),
     );
@@ -184,11 +182,28 @@ class AppBarWidget extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: Row(
         children: [
-          const CircleAvatar(
-            radius: 25,
-            backgroundImage: AssetImage('assets/images/user.png'),
-            backgroundColor: Color.fromARGB(255, 158, 227, 160),
-            foregroundColor: Colors.white,
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 25,
+                backgroundImage: AssetImage('assets/images/user.png'),
+                backgroundColor: Color.fromARGB(255, 254, 254, 254),
+                foregroundColor: Colors.white,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  width: 14,
+                  height: 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.green,
+                    border: Border.all(width: 2, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
           SizedBox(width: 10),
           Column(
@@ -201,8 +216,9 @@ class AppBarWidget extends StatelessWidget {
               Text(
                 '$userRole',
                 style: TextStyle(
-                    color: const Color.fromARGB(255, 122, 122, 122),
-                    fontSize: 18),
+                  color: const Color.fromARGB(255, 122, 122, 122),
+                  fontSize: 18,
+                ),
               ),
             ],
           ),

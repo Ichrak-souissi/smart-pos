@@ -65,7 +65,11 @@ class _OrderWidgetState extends State<OrderWidget> {
       List<Supplement> selectedSupplements, double total) {
     double supplementsTotal = selectedSupplements.fold(
         0, (sum, supplement) => sum + supplement.price);
-    double totalPrice = (item.price + supplementsTotal) * quantity;
+
+    // Calculate the price after discount
+    double discount = item.discount?.toDouble() ?? 0;
+    double discountedPrice = item.price - (item.price * discount / 100);
+    double totalPrice = (discountedPrice + supplementsTotal) * quantity;
 
     Item newItem = Item(
       id: item.id,
@@ -74,7 +78,7 @@ class _OrderWidgetState extends State<OrderWidget> {
       description: item.description,
       imageUrl: item.imageUrl,
       discount: item.discount,
-      price: item.price + supplementsTotal,
+      price: discountedPrice + supplementsTotal, // Updated price with discount
       calories: item.calories,
       createdAt: item.createdAt,
       supplements: selectedSupplements,
@@ -86,9 +90,6 @@ class _OrderWidgetState extends State<OrderWidget> {
 
     if (newOrderMap.containsKey(newItem)) {
       newOrderMap[newItem] = newOrderMap[newItem]! + quantity;
-
-      double updatedTotalPrice = newItem.price * newOrderMap[newItem]!;
-      newItem.price = updatedTotalPrice;
     } else {
       newOrderMap[newItem] = quantity;
     }
@@ -389,17 +390,58 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                           padding:
                                                               const EdgeInsets
                                                                   .all(10),
-                                                          child: Text(
-                                                            '${item.price.toStringAsFixed(2)} dt',
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 14,
-                                                              color: Colors.grey
-                                                                  .shade500,
-                                                            ),
-                                                          ),
+                                                          child: item.discount !=
+                                                                      null &&
+                                                                  item.discount !=
+                                                                      0
+                                                              ? Column(
+                                                                  crossAxisAlignment:
+                                                                      CrossAxisAlignment
+                                                                          .start,
+                                                                  children: [
+                                                                    Text(
+                                                                      '${item.price.toStringAsFixed(2)} dt',
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        fontSize:
+                                                                            14,
+                                                                        color: Colors
+                                                                            .grey
+                                                                            .shade500,
+                                                                        decoration:
+                                                                            TextDecoration.lineThrough,
+                                                                      ),
+                                                                    ),
+                                                                    Text(
+                                                                      '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
+                                                                      style:
+                                                                          TextStyle(
+                                                                        fontWeight:
+                                                                            FontWeight.bold,
+                                                                        fontSize:
+                                                                            14,
+                                                                        color: Colors
+                                                                            .red,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                )
+                                                              : Text(
+                                                                  '${item.price.toStringAsFixed(2)} dt',
+                                                                  style:
+                                                                      TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize:
+                                                                        14,
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade500,
+                                                                  ),
+                                                                ),
                                                         ),
                                                         GestureDetector(
                                                           onTap: () {
@@ -463,14 +505,15 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                     ),
                                                   ),
                                                   child: const Text(
-                                                    'New',
+                                                    'Nouveau',
                                                     style: TextStyle(
                                                         color: Colors.white,
                                                         fontSize: 10),
                                                   ),
                                                 ),
                                               ),
-                                            if (item.discount != null)
+                                            if (item.discount != null &&
+                                                item.discount != 0)
                                               Positioned(
                                                 top: 5,
                                                 right: 5,

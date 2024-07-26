@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:pos/table/models/table.dart';
 
 class CircularTable extends StatelessWidget {
   final int capacity;
@@ -8,7 +7,8 @@ class CircularTable extends StatelessWidget {
   final Color borderColor;
   final bool isCircular;
 
-  CircularTable({
+  const CircularTable({
+    super.key,
     required this.capacity,
     required this.tableName,
     required this.borderColor,
@@ -17,16 +17,17 @@ class CircularTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String tableImage = 'assets/images/table.svg';
+    String tableImage = 'assets/images/table6.svg';
 
-    if (capacity == 4) {
-      tableImage = 'assets/images/table.svg';
-    } else if (capacity == 5) {
-      tableImage = 'assets/images/table.svg';
-    } else if (capacity >= 8) {
-      tableImage = 'assets/images/table.png';
+    if (capacity == 2) {
+      tableImage =
+          'assets/images/table22.svg'; // Affiche table2 pour capacité de 2
+    } else if (capacity == 4) {
+      tableImage =
+          'assets/images/table4.svg'; // Affiche table4 pour capacité de 4
     } else {
-      tableImage = 'assets/images/table.svg';
+      tableImage =
+          'assets/images/table6.svg'; // Affiche table6 pour les autres capacités
     }
 
     return Container(
@@ -46,10 +47,10 @@ class CircularTable extends StatelessWidget {
             child: Center(
               child: Text(
                 tableName,
-                style: TextStyle(
-                    color: Colors.black,
+                style: const TextStyle(
+                    color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 10),
+                    fontSize: 25),
               ),
             ),
           ),

@@ -9,7 +9,7 @@ import 'package:pos/order/models/order.dart';
 import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
-import 'widgets/category_pieChart.dart'; // Example import, adjust as needed
+import 'widgets/category_pieChart.dart';
 
 class DashboardPage extends StatelessWidget {
   final OrderItemController orderItemController =
@@ -101,7 +101,7 @@ class DashboardPage extends StatelessWidget {
                             flex: 1,
                             child: _buildCardContainer(
                               _buildRevenueChart(),
-                              'Revenus par jour',
+                              'Revenus par mois',
                             ),
                           ),
                         ],
@@ -401,8 +401,8 @@ class OrderItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-          //backgroundImage: NetworkImage(item.imageUrl),
-          ),
+        backgroundImage: NetworkImage(item.imageUrl),
+      ),
       title: Text(item.name, style: TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('${item.quantity} commandes'),
       trailing: Container(

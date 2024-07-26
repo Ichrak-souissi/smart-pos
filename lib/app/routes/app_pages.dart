@@ -19,7 +19,7 @@ class AppPages {
     ),
     GetPage(
       name: Routes.RoomManagement,
-      page: () => const RoomView(),
+      page: () => RoomView(),
     ),
     GetPage(
       name: Routes.Dashboard,

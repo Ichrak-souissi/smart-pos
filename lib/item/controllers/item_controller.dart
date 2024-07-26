@@ -1,71 +1,68 @@
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-import 'package:pos/Dio/client_dio.dart';
 import 'package:pos/constants.dart';
-import 'package:pos/order-item/models/order-item.dart';
-
-import '../models/item.dart';
+import 'package:pos/item/models/item.dart';
 
 class ItemController extends GetxController {
-  RxBool isLoading = false.obs;
-  RxList<Item> categoryItems = <Item>[].obs;
-
-  final ClientDio _clientDio = ClientDio();
+  final Dio _clientDio = Dio();
+  final RxList<Item> categoryItems = <Item>[].obs;
+  final RxBool isLoading = false.obs;
+  final RxString errorMessage = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    fetchItems();
+  }
+
+  Future<void> fetchItems() async {
+    isLoading.value = true;
+    try {
+      final response = await _clientDio.get(Constants.getItemUrl());
+      if (response.statusCode == 200) {
+        final List<dynamic> itemsJson = response.data;
+        final List<Item> loadedItems =
+            itemsJson.map((itemJson) => Item.fromJson(itemJson)).toList();
+        categoryItems.value = loadedItems;
+        errorMessage.value = '';
+      } else {
+        errorMessage.value = 'Failed to fetch items: ${response.statusCode}';
+      }
+    } catch (e) {
+      errorMessage.value = 'Error occurred while fetching items: $e';
+    } finally {
+      isLoading.value = false;
+    }
   }
 
   Future<Item?> updateItem(Item updatedItem) async {
     try {
-      final dio = Dio();
-      final url = Constants.updateItemUrl(updatedItem.id.toString());
-      final response = await dio.patch(
+      final String url = Constants.updateItemUrl(updatedItem.id.toString());
+      final response = await _clientDio.patch(
         url,
         data: updatedItem.toJson(),
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = response.data;
-        final updatedItem = Item.fromJson(responseData);
-        int index =
-            categoryItems.indexWhere((item) => item.id == updatedItem.id);
+        final Item item = Item.fromJson(response.data);
+        final index = categoryItems.indexWhere((i) => i.id == item.id);
+
         if (index != -1) {
-          categoryItems[index] = updatedItem;
-          categoryItems.refresh();
+          categoryItems[index] = item;
         }
-        return updatedItem;
+
+        errorMessage.value = '';
+        return item;
       } else {
-        print('Failed to update item: ${response.statusCode}');
+        errorMessage.value = 'Failed to update item: ${response.statusCode}';
         return null;
       }
     } catch (e) {
-      print('Error updating item: $e');
+      errorMessage.value = 'Error occurred while updating item: $e';
       return null;
-    }
-  }
-
-  Future<void> deleteItem(int itemId) async {
-    try {
-      isLoading(true);
-      final response = await _clientDio.dio.delete(
-        Constants.deleteItemUrl(itemId.toString()),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
-      );
-      if (response.statusCode == 200) {
-        categoryItems.removeWhere((item) => item.id == itemId);
-      } else {
-        print('Failed to delete item: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error deleting item: $e');
-    } finally {
-      isLoading(false);
     }
   }
 }

@@ -1,61 +1,126 @@
 import 'package:dio/dio.dart';
-import 'package:pos/supplement/models/supplement.dart';
-import 'package:pos/constants.dart';
 import 'package:get/get.dart';
+import 'package:pos/constants.dart';
+import 'package:pos/supplement/models/supplement.dart';
 
-class SupplementController {
+class SupplementController extends GetxController {
   final Dio _clientDio = Dio();
-  final RxBool isLoading =
-      false.obs; // Utilisation de RxBool pour le state management
+  var isLoading = false.obs;
+  var supplements = <Supplement>[].obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+  }
 
   Future<List<Supplement>> getSupplementsByItemId(int itemId) async {
+    isLoading.value = true;
     try {
       final response = await _clientDio.get(
         Constants.getSupplementByItemIdUrl(itemId.toString()),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
       if (response.statusCode == 200) {
         final List<dynamic> supplementsJson = response.data;
-        final List<Supplement> supplements = supplementsJson
-            .map((supplementJson) => Supplement.fromJson(supplementJson))
-            .toList();
-        return supplements;
+        final List<Supplement> loadedSupplements =
+            supplementsJson.map((json) => Supplement.fromJson(json)).toList();
+        supplements.value = loadedSupplements;
+
+        return loadedSupplements; // Return the list of supplements
       } else {
-        throw Exception('Failed to get supplements by item ID');
+        Get.snackbar('Error', 'Failed to get supplements by item ID');
+        return []; // Return an empty list in case of failure
       }
+    } on DioError catch (e) {
+      Get.snackbar('Error', 'Dio error: ${e.message}');
+      return []; // Return an empty list in case of Dio error
     } catch (e) {
-      throw Exception(
-          'Error occurred while fetching supplements by item ID: $e');
+      Get.snackbar('Error', 'Unexpected error: $e');
+      return []; // Return an empty list in case of unexpected error
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> updateSupplement(Supplement updatedSupplement) async {
+    isLoading.value = true;
+    try {
+      final String url =
+          Constants.updateSupplementUrl(updatedSupplement.id.toString());
+      final response = await _clientDio.patch(
+        url,
+        data: updatedSupplement.toJson(),
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = response.data;
+        final updated = Supplement.fromJson(responseData);
+        final index = supplements.indexWhere((s) => s.id == updated.id);
+        if (index != -1) {
+          supplements[index] = updated;
+          supplements.refresh();
+        }
+      } else {
+        Get.snackbar('Error', 'Failed to update supplement');
+      }
+    } on DioError catch (e) {
+      Get.snackbar('Error', 'Dio error: ${e.message}');
+    } catch (e) {
+      Get.snackbar('Error', 'Unexpected error: $e');
+    } finally {
+      isLoading.value = false;
     }
   }
 
   Future<void> addSupplementToItem(Supplement supplement) async {
+    isLoading.value = true;
     try {
-      isLoading.value = true;
       final response = await _clientDio.post(
         Constants.addSupplementUrl(),
         data: supplement.toJson(),
         options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers: {'Content-Type': 'application/json'},
         ),
       );
-      print('Response status code: ${response.statusCode}');
-      print('Response data: ${response.data}');
-
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('Supplement added to item successfully');
+        supplements.add(supplement);
+        supplements.refresh();
       } else {
-        throw Exception('Failed to add supplement to item');
+        Get.snackbar('Error', 'Failed to add supplement to item');
       }
+    } on DioError catch (e) {
+      Get.snackbar('Error', 'Dio error: ${e.message}');
     } catch (e) {
-      print('Error occurred while adding supplement to item: $e');
-      throw Exception('Error occurred while adding supplement to item: $e');
+      Get.snackbar('Error', 'Unexpected error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteSupplement(int id) async {
+    isLoading.value = true;
+    try {
+      final String url = Constants.deleteSupplementUrl(id.toString());
+      final response = await _clientDio.delete(
+        url,
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      if (response.statusCode == 200) {
+        supplements.removeWhere((s) => s.id == id);
+        supplements.refresh();
+      } else {
+        Get.snackbar('Error', 'Failed to delete supplement');
+      }
+    } on DioError catch (e) {
+      Get.snackbar('Error', 'Dio error: ${e.message}');
+    } catch (e) {
+      Get.snackbar('Error', 'Unexpected error: $e');
     } finally {
       isLoading.value = false;
     }

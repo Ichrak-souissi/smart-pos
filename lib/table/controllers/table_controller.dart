@@ -63,12 +63,12 @@ class TableController extends GetxController {
         totalTables == 0 ? 0 : (availableTables / totalTables) * 100;
   }
 
-  Future<Table?> updateTable(String id) async {
+  Future<Table?> updateTable(String id, bool active) async {
     try {
       final dio = Dio();
       final url = Constants.updateTableUrl(id);
       final requestData = {
-        'active': true,
+        'active': active,
       };
 
       final response = await dio.patch(
