@@ -7,6 +7,7 @@ import 'package:pos/order/models/order.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/models/room.dart';
 import 'package:pos/room/widgets/appbar_widget.dart';
+// ignore: library_prefixes
 import 'package:pos/table/models/table.dart' as Table;
 import 'package:pos/table/views/table_detail_dialog.dart';
 import 'package:pos/table/widgets/cicular_table.dart';
@@ -62,7 +63,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
   Future<void> _loadOrdersAndItemsByTableId(int tableId) async {
     try {
       ordersForSelectedTable.assignAll(orderController.orders
-          .where((order) => order.tableId == tableId)
+          .where((order) => order.tableId == tableId && order.isPaid == true)
           .toList());
     } catch (e) {
       print('Error loading orders and items: $e');
@@ -520,7 +521,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                               }
                               return GestureDetector(
                                 onTap: () {
-                                  if (table.active) {
+                                  {
                                     setState(() {
                                       selectedTable = table;
                                       TableDetailsDialog(

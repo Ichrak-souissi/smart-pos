@@ -7,14 +7,7 @@ import 'package:pos/item/models/item.dart';
 import 'package:pos/supplement/controllers/supplement_controller.dart';
 import 'package:pos/supplement/models/supplement.dart';
 
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:pos/app_theme.dart';
-import 'package:pos/item/controllers/item_controller.dart';
-import 'package:pos/item/models/item.dart';
-import 'package:pos/supplement/controllers/supplement_controller.dart';
-import 'package:pos/supplement/models/supplement.dart';
-
+// ignore: must_be_immutable
 class ItemDetailDialog extends StatefulWidget {
   Item item;
 
@@ -24,6 +17,7 @@ class ItemDetailDialog extends StatefulWidget {
   });
 
   @override
+  // ignore: library_private_types_in_public_api
   _ItemDetailDialogState createState() => _ItemDetailDialogState();
 }
 
@@ -95,7 +89,6 @@ class _ItemDetailDialogState extends State<ItemDetailDialog> {
                                 supplementController
                                     .getSupplementsByItemId(updatedItem.id);
 
-                                // Afficher le message de confirmation
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
@@ -124,31 +117,22 @@ class _ItemDetailDialogState extends State<ItemDetailDialog> {
                 Center(
                   child: Stack(
                     children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child:
-                            item.imageUrl != null && item.imageUrl!.isNotEmpty
-                                ? Image.network(
-                                    item.imageUrl!,
-                                    width: 120,
-                                    height: 120,
-                                    fit: BoxFit.cover,
-                                  )
-                                : Container(
-                                    width: 120,
-                                    height: 120,
-                                    color: Colors.grey[300],
-                                    child: const Center(
-                                      child: Text(
-                                        'Image',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
+                      // Remplacer l'image commentée par une icône
+                      Container(
+                        width: 120,
+                        height: 120,
+                        color: Colors.grey[300],
+                        child: const Center(
+                          child: Icon(
+                            Icons
+                                .image, // Vous pouvez choisir une autre icône si nécessaire
+                            size:
+                                60, // Ajustez la taille de l'icône selon vos besoins
+                            color: Colors.grey, // Couleur de l'icône
+                          ),
+                        ),
                       ),
+
                       if (item.discount != null && item.discount! > 0)
                         Positioned(
                           right: 4,
@@ -228,7 +212,7 @@ class _ItemDetailDialogState extends State<ItemDetailDialog> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    item.description ?? 'Aucune description',
+                    item.description,
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black,
@@ -315,6 +299,7 @@ class AddSupplementDialog extends StatefulWidget {
   final int itemId;
 
   const AddSupplementDialog({
+    super.key,
     required this.itemId,
   });
 
@@ -437,11 +422,10 @@ class _EditItemDialogState extends State<EditItemDialog> {
     nameController.text = widget.item.name;
     priceController.text = widget.item.price.toString();
     originalPrice = widget.item.price;
-    discountedPrice =
-        originalPrice; // Initial discounted price is the same as the original
+    discountedPrice = originalPrice;
     caloriesController.text = widget.item.calories.toString();
-    descriptionController.text = widget.item.description ?? '';
-    imageUrlController.text = widget.item.imageUrl ?? '';
+    descriptionController.text = widget.item.description;
+    imageUrlController.text = widget.item.imageUrl;
     discountController.text = widget.item.discount?.toString() ?? '';
   }
 
@@ -594,7 +578,7 @@ class _EditItemDialogState extends State<EditItemDialog> {
 class SupplementsListDialog extends StatelessWidget {
   final int itemId;
 
-  const SupplementsListDialog({required this.itemId});
+  const SupplementsListDialog({super.key, required this.itemId});
 
   @override
   Widget build(BuildContext context) {
@@ -678,7 +662,7 @@ class SupplementsListDialog extends StatelessWidget {
 class EditSupplementDialog extends StatefulWidget {
   final Supplement supplement;
 
-  const EditSupplementDialog({required this.supplement});
+  const EditSupplementDialog({super.key, required this.supplement});
 
   @override
   _EditSupplementDialogState createState() => _EditSupplementDialogState();

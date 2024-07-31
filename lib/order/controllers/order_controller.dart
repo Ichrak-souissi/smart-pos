@@ -98,4 +98,57 @@ class OrderController extends GetxController {
       isLoadingOrders.value = false;
     }
   }
+
+  Future<void> UpdateOrder(String orderId) async {
+    try {
+      isLoadingOrders.value = true;
+      final url = Constants.updateOrder(orderId);
+      print('Updating order with ID: $orderId');
+      print('Request URL: $url');
+      final response = await _clientDio.dio.patch(url, data: {"isPaid": true});
+      print('Response status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        int index = orders.indexWhere((order) => order.id == orderId);
+        if (index != -1) {
+          orders[index].isPaid = true;
+          orders.refresh();
+          print('Order with ID: $orderId marked as paid');
+        } else {
+          print('Order with ID: $orderId not found in local orders');
+        }
+      } else {
+        throw Exception(
+            'Failed to mark order as paid. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating order with ID: $orderId: $e');
+      rethrow;
+    } finally {
+      isLoadingOrders.value = false;
+    }
+  }
+
+  Future<void> deleteOrder(String orderId) async {
+    try {
+      isLoadingOrders.value = true;
+      final url = Constants.deleteOrderUrl(orderId);
+      print('Deleting order with ID: $orderId');
+      print('Request URL: $url');
+      final response = await _clientDio.dio.delete(url);
+      print('Response status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        orders.removeWhere((order) => order.id == orderId);
+        orders.refresh();
+        print('Order with ID: $orderId deleted');
+      } else {
+        throw Exception(
+            'Failed to delete order. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting order with ID: $orderId: $e');
+      rethrow;
+    } finally {
+      isLoadingOrders.value = false;
+    }
+  }
 }

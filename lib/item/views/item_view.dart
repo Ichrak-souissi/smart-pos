@@ -57,10 +57,10 @@ class ItemView {
                                   height: 100,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(12),
-                                    image: DecorationImage(
-                                      image: NetworkImage(item.imageUrl),
-                                      fit: BoxFit.cover,
-                                    ),
+                                    //  image: DecorationImage(
+                                    //    image: NetworkImage(item.imageUrl),
+                                    //    fit: BoxFit.cover,
+                                    //  ),
                                   ),
                                 ),
                                 const SizedBox(height: 10),

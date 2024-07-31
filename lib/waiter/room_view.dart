@@ -43,7 +43,7 @@ class _RoomViewState extends State<RoomView> {
       await orderController.fetchOrdersByTableId(tableId.toString());
       ordersForSelectedTable.assignAll(
         orderController.orders
-            .where((order) => order.tableId == tableId)
+            .where((order) => order.tableId == tableId && order.isPaid == false)
             .toList(),
       );
 
@@ -76,8 +76,9 @@ class _RoomViewState extends State<RoomView> {
     _loadOrdersAndItemsByTableId(selectedTable!.id);
     if (table.active) {
       _showOptionsDialog(context);
-    } else
+    } else if (table.active == false) {
       _showOrderDialog();
+    }
   }
 
   void _showOptionsDialog(BuildContext context) {
@@ -137,6 +138,8 @@ class _RoomViewState extends State<RoomView> {
                     });
                     tableController.updateTable(
                         selectedTable!.id.toString(), !value);
+                    roomController.getTablesByRoomId(
+                        roomController.roomList[selectedRoomIndex].id);
                   },
                 ),
               ),
@@ -376,118 +379,178 @@ class _RoomViewState extends State<RoomView> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              'Commande N°${order.id}',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
+                                      Dismissible(
+                                        key: Key(order.id.toString()),
+                                        direction: DismissDirection.endToStart,
+                                        background: Container(
+                                          color: Colors.redAccent,
+                                          child: Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 20.0),
+                                              child: Icon(
+                                                Icons.delete,
+                                                color: Colors.white,
+                                                size: 30.0,
                                               ),
                                             ),
-                                            SizedBox(height: 5),
-                                            Text(
-                                              'Date: ${order.createdAt.toLocal().toString().substring(0, 16)}',
-                                              style: TextStyle(fontSize: 14),
+                                          ),
+                                        ),
+                                        onDismissed: (direction) {
+                                          orderController
+                                              .deleteOrder(order.id.toString());
+                                          setState(() {
+                                            ordersForSelectedTable
+                                                .remove(order);
+                                          });
+                                        },
+                                        child: Container(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Card(
+                                            color:
+                                                Colors.white.withOpacity(0.8),
+                                            elevation: 4,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(12.0),
                                             ),
-                                            SizedBox(height: 10),
-                                            Text(
-                                              'Articles:',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                            ),
-                                            SizedBox(height: 5),
-                                            for (var item in orderItems.where(
-                                                (item) =>
-                                                    item.orderId == order.id))
-                                              Container(
-                                                margin: EdgeInsets.symmetric(
-                                                    vertical: 3.0),
-                                                padding: EdgeInsets.all(8.0),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.white,
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.grey
-                                                          .withOpacity(0.2),
-                                                      spreadRadius: 2,
-                                                      blurRadius: 4,
-                                                      offset: Offset(0, 2),
+                                            child: Padding(
+                                              padding: EdgeInsets.all(12.0),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Commande N°${order.id}',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
-                                                  ],
-                                                ),
-                                                child: Column(
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.start,
-                                                  children: [
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .spaceBetween,
-                                                      children: [
-                                                        Text(
-                                                          '${item.quantity} x ${item.name}',
-                                                          style: TextStyle(
-                                                              fontSize: 14),
-                                                        ),
-                                                        Text(
-                                                          '${item.price} TND',
-                                                          style: TextStyle(
-                                                            fontSize: 14,
-                                                            fontWeight:
-                                                                FontWeight.bold,
-                                                          ),
-                                                        ),
-                                                      ],
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  Text(
+                                                    'Date: ${order.createdAt.toLocal().toString().substring(0, 16)}',
+                                                    style:
+                                                        TextStyle(fontSize: 14),
+                                                  ),
+                                                  SizedBox(height: 10),
+                                                  Text(
+                                                    'Articles:',
+                                                    style: TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
                                                     ),
-                                                    if (item
-                                                        .note.isNotEmpty) ...[
-                                                      SizedBox(height: 5),
-                                                      Text(
-                                                        'Note: ${item.note}',
-                                                        style: TextStyle(
-                                                          fontSize: 12,
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                          color:
-                                                              Colors.grey[600],
-                                                        ),
-                                                      ),
-                                                    ],
-                                                    if (item.selectedSupplements
-                                                        .isNotEmpty) ...[
-                                                      SizedBox(height: 5),
-                                                      Text(
-                                                        'Suppléments:',
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                        ),
-                                                      ),
-                                                      for (var supplement in item
-                                                          .selectedSupplements)
-                                                        Text(
-                                                          '${supplement['name']} - ${supplement['price']} TND',
-                                                          style: TextStyle(
-                                                            fontSize: 12,
-                                                            color: Colors
-                                                                .grey[600],
+                                                  ),
+                                                  SizedBox(height: 5),
+                                                  for (var item in orderItems
+                                                      .where((item) =>
+                                                          item.orderId ==
+                                                          order.id))
+                                                    Container(
+                                                      margin:
+                                                          EdgeInsets.symmetric(
+                                                              vertical: 3.0),
+                                                      padding:
+                                                          EdgeInsets.all(8.0),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white
+                                                            .withOpacity(0.6),
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(8),
+                                                        boxShadow: [
+                                                          BoxShadow(
+                                                            color: Colors.grey
+                                                                .withOpacity(
+                                                                    0.3),
+                                                            spreadRadius: 2,
+                                                            blurRadius: 4,
+                                                            offset:
+                                                                Offset(0, 2),
                                                           ),
-                                                        ),
-                                                    ],
-                                                  ],
-                                                ),
+                                                        ],
+                                                      ),
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Row(
+                                                            mainAxisAlignment:
+                                                                MainAxisAlignment
+                                                                    .spaceBetween,
+                                                            children: [
+                                                              Text(
+                                                                '${item.quantity} x ${item.name}',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        14),
+                                                              ),
+                                                              Text(
+                                                                '${item.price.toStringAsFixed(3)} TND',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold,
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          if (item.note
+                                                              .isNotEmpty) ...[
+                                                            SizedBox(height: 5),
+                                                            Text(
+                                                              'Note: ${item.note}',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic,
+                                                                color: Colors
+                                                                    .grey[600],
+                                                              ),
+                                                            ),
+                                                          ],
+                                                          if (item
+                                                              .selectedSupplements
+                                                              .isNotEmpty) ...[
+                                                            SizedBox(height: 5),
+                                                            Text(
+                                                              'Suppléments:',
+                                                              style: TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                            for (var supplement
+                                                                in item
+                                                                    .selectedSupplements)
+                                                              Text(
+                                                                '${supplement['name']} - ${supplement['price']} TND',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      600],
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        ],
+                                                      ),
+                                                    ),
+                                                ],
                                               ),
-                                          ],
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       SizedBox(height: 10),

@@ -5,12 +5,11 @@ import 'package:pos/constants.dart';
 import 'package:pos/order/models/order.dart';
 
 class PaymentController extends GetxController {
-  final Dio _dio = Dio(); // Dio instance for HTTP requests
+  final Dio _dio = Dio();
   final RxList<Order> _orders = <Order>[].obs;
 
   List<Order> get orders => _orders.toList();
 
-  // Compute the total amount from the orders
   double get amount => _orders.fold(0.0, (sum, order) => sum + order.total);
 
   Future<void> fetchPayments() async {
@@ -18,7 +17,6 @@ class PaymentController extends GetxController {
       final response = await _dio.get(Constants.getPayments());
       if (response.statusCode == 200) {
         print('Payments fetched successfully');
-        // Handle the fetched payments if necessary
       } else {
         print('Failed to fetch payments: ${response.statusCode}');
         Get.snackbar('Error', 'Failed to fetch payments');
@@ -35,7 +33,7 @@ class PaymentController extends GetxController {
         Constants.addPaymentUrl(),
         data: {
           'orders': _orders.map((order) => order.toJson()).toList(),
-          'amount': amount, // Send the calculated amount
+          'amount': amount,
         },
       );
       if (response.statusCode == 201) {

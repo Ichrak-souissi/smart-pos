@@ -7,6 +7,7 @@ class Order {
   late final List<OrderItem> orderItems;
   late final int status;
   late final DateTime createdAt;
+  late final bool isPaid;
 
   Order({
     required this.id,
@@ -14,6 +15,7 @@ class Order {
     required this.total,
     required this.orderItems,
     required this.status,
+    required this.isPaid,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -30,6 +32,7 @@ class Order {
       createdAt: json?["createdAt"] != null
           ? DateTime.parse(json?["createdAt"])
           : DateTime.now(),
+      isPaid: json?["isPaid"] ?? false,
     );
   }
 
@@ -40,5 +43,6 @@ class Order {
         "orderItems": List<dynamic>.from(orderItems.map((x) => x.toJson())),
         "status": status,
         "createdAt": createdAt.toIso8601String(),
+        "isPaid": isPaid,
       };
 }

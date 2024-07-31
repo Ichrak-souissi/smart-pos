@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_awesome_calculator/flutter_awesome_calculator.dart';
+import 'package:get/get.dart';
+import 'package:pos/app_theme.dart';
+import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
+import 'package:pos/payement/controllers/payement_controller.dart';
 
 class CalculatorWidget extends StatefulWidget {
   final double orderTotal;
@@ -19,6 +23,8 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
   double clientAmount = 0.0;
   double amountToReturn = 0.0;
   TextEditingController clientAmountController = TextEditingController();
+  final PaymentController paymentController = Get.put(PaymentController());
+  final OrderController orderController = Get.put(OrderController());
 
   @override
   void dispose() {
@@ -88,7 +94,7 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                   ),
                   readOnly: true,
                   controller: TextEditingController(
-                    text: '${widget.orderTotal.toStringAsFixed(2)} DT',
+                    text: '${widget.orderTotal.toStringAsFixed(3)} DT',
                   ),
                 ),
                 SizedBox(height: 10),
@@ -102,7 +108,7 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                   ),
                   readOnly: true,
                   controller: TextEditingController(
-                    text: '${amountToReturn.toStringAsFixed(2)} DT',
+                    text: '${amountToReturn.toStringAsFixed(3)} DT',
                   ),
                 ),
                 SizedBox(height: 20),
@@ -112,9 +118,11 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                   ),
                   child: FlutterAwesomeCalculator(
                     context: context,
-                    digitsButtonColor: Colors.teal,
+                    digitsButtonColor: Color.fromARGB(255, 4, 204, 107),
+                    operatorsButtonColor: Color.fromARGB(255, 119, 246, 185),
                     backgroundColor: Colors.white,
-                    expressionAnswerColor: Colors.redAccent,
+                    clearButtonColor: Color.fromARGB(255, 119, 246, 185),
+                    expressionAnswerColor: Color.fromARGB(255, 119, 246, 185),
                     onChanged: (answer, expression) {
                       setState(() {
                         if (expression == 'del') {
@@ -125,7 +133,7 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                           if (answer.isNotEmpty) {
                             clientAmount = double.parse(answer);
                             clientAmountController.text =
-                                clientAmount.toStringAsFixed(2);
+                                clientAmount.toStringAsFixed(3);
                           } else {
                             clientAmount = 0.0;
                             clientAmountController.text = '';
@@ -143,7 +151,7 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                     Expanded(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).pop(); // Close the dialog
+                          Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.redAccent,
@@ -158,11 +166,15 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                     SizedBox(width: 10),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          // Add your logic to validate the payment
+                        onPressed: () async {
+                          for (Order order in widget.orders) {
+                            await orderController.UpdateOrder(
+                                order.id.toString());
+                          }
+                          Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: AppTheme.lightTheme.primaryColor,
                           padding: EdgeInsets.symmetric(vertical: 15),
                         ),
                         child: Text(

@@ -17,7 +17,6 @@ class TableController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-
     getTables();
     calculateTableOccupancy();
   }
@@ -38,7 +37,6 @@ class TableController extends GetxController {
         final List<dynamic> tablesJson = response.data;
         final List<Table> tables =
             tablesJson.map((tableJson) => Table.fromJson(tableJson)).toList();
-
         tablesList.assignAll(tables);
         calculateTableOccupancy();
       } else {
@@ -65,13 +63,12 @@ class TableController extends GetxController {
 
   Future<Table?> updateTable(String id, bool active) async {
     try {
-      final dio = Dio();
       final url = Constants.updateTableUrl(id);
       final requestData = {
         'active': active,
       };
 
-      final response = await dio.patch(
+      final response = await _clientDio.dio.patch(
         url,
         data: requestData,
       );
@@ -79,7 +76,15 @@ class TableController extends GetxController {
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = response.data;
         final updatedTable = Table.fromJson(responseData);
-        tablesList.refresh();
+
+        final index =
+            tablesList.indexWhere((table) => table.id == updatedTable.id);
+        if (index != -1) {
+          tablesList[index] = updatedTable;
+        } else {
+          tablesList.add(updatedTable);
+        }
+
         calculateTableOccupancy();
         return updatedTable;
       } else {

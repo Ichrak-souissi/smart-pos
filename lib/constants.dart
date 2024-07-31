@@ -118,4 +118,8 @@ class Constants {
 // Urls pour les endpoints de payements
   static String addPaymentUrl() => '$baseUrl$paymentEndpoint/add';
   static String getPayments() => '$baseUrl$paymentEndpoint';
+
+  static updateOrder(String id) => '$baseUrl$ordersEndpoint/$id';
+
+  static deleteOrderUrl(String id) => '$baseUrl$ordersEndpoint$id';
 }

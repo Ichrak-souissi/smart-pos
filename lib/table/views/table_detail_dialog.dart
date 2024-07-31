@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/order/models/order.dart';
-import 'package:pos/table/models/table.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 class TableDetailsDialog {
@@ -18,13 +17,13 @@ class TableDetailsDialog {
       builder: (BuildContext context) {
         DateTime? selectedDate;
 
-        return AlertDialog(
+        return Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
-          contentPadding: const EdgeInsets.all(15),
-          content: SizedBox(
-            width: MediaQuery.of(context).size.width * 0.8, // Adjust width here
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.6,
+            padding: const EdgeInsets.all(15),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,8 +76,6 @@ class TableDetailsDialog {
                   ),
                 ),
                 const SizedBox(height: 15),
-
-                // History header and calendar icon
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -99,13 +96,13 @@ class TableDetailsDialog {
                   ],
                 ),
                 const SizedBox(height: 10),
-
-                // Orders list
                 Obx(() {
                   var filteredOrders = ordersForSelectedTable.where((order) {
-                    if (selectedDate == null) return true;
-                    return DateFormat('dd-MM-yyyy').format(order.createdAt) ==
-                        DateFormat('dd-MM-yyyy').format(selectedDate!);
+                    // ignore: unnecessary_null_comparison
+                    bool dateMatches = selectedDate == null ||
+                        DateFormat('dd-MM-yyyy').format(order.createdAt) ==
+                            DateFormat('dd-MM-yyyy').format(selectedDate);
+                    return dateMatches && order.isPaid == true;
                   }).toList();
 
                   return filteredOrders.isNotEmpty
@@ -182,23 +179,27 @@ class TableDetailsDialog {
                         );
                 }),
                 const SizedBox(height: 10),
+                // Ajout des boutons en bas du dialog
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text(
+                        'Fermer',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text(
-                'Fermer',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-          ],
         );
       },
     );

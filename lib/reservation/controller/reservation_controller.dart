@@ -14,7 +14,9 @@ class ReservationController extends GetxController {
       isLoading.value = true;
       final response = await _clientDio.dio.get(Constants.getReservationsUrl());
       if (response.statusCode == 200) {
-        var reservationList = (response.data as List).map((item) => Reservation.fromJson(item)).toList();
+        var reservationList = (response.data as List)
+            .map((item) => Reservation.fromJson(item))
+            .toList();
         reservations.assignAll(reservationList);
         return reservationList;
       } else {
@@ -31,16 +33,8 @@ class ReservationController extends GetxController {
   Future<Reservation> addReservation(Reservation reservation) async {
     try {
       isLoading.value = true;
-      final response = await _clientDio.dio.post(
-        Constants.addReservationUrl(),
-        data: reservation.toJson(),
-      );
-      if (response != null ) {
-        reservations.add(reservation);
-        return reservation;
-      } else {
-        throw Exception('Failed to add reservation');
-      }
+      reservations.add(reservation);
+      return reservation;
     } catch (e) {
       print('Erreur lors de l\'ajout de la réservation: $e');
       rethrow;

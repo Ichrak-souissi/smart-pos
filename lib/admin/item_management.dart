@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pos/app_theme.dart';
@@ -10,7 +9,10 @@ import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class ItemManagement extends StatefulWidget {
+  const ItemManagement({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _ItemManagementState createState() => _ItemManagementState();
 }
 
@@ -47,8 +49,8 @@ class _ItemManagementState extends State<ItemManagement> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  AppBarWidget(),
-                  SizedBox(height: 10),
+                  const AppBarWidget(),
+                  const SizedBox(height: 10),
                   _buildCategoryBoxes(),
                   Expanded(
                     child: _buildCategoryViews(),
@@ -74,7 +76,7 @@ class _ItemManagementState extends State<ItemManagement> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Supprimer la catégorie'),
+          title: const Text('Supprimer la catégorie'),
           content: Text(
               'Êtes-vous sûr de vouloir supprimer la catégorie ${category.name} ?'),
           actions: <Widget>[
@@ -82,21 +84,22 @@ class _ItemManagementState extends State<ItemManagement> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
             TextButton(
               onPressed: () async {
                 await categoryController.deleteCategory(category);
-                Navigator.of(context).pop();
 
                 Get.snackbar(
                   'Succès',
                   'La catégorie ${category.name} a été supprimée avec succès.',
                   snackPosition: SnackPosition.BOTTOM,
-                  duration: Duration(seconds: 3),
+                  duration: const Duration(seconds: 3),
                 );
+                // ignore: use_build_context_synchronously
+                Navigator.of(context).pop();
               },
-              child: Text('Supprimer'),
+              child: const Text('Supprimer'),
             ),
           ],
         );
@@ -154,7 +157,7 @@ class _ItemManagementState extends State<ItemManagement> {
                               GestureDetector(
                                 onTap: () =>
                                     _showDeleteCategoryDialog(category),
-                                child: Icon(
+                                child: const Icon(
                                   Icons.close,
                                   color: Colors.white,
                                   size: 15,
@@ -164,7 +167,7 @@ class _ItemManagementState extends State<ItemManagement> {
                         ),
                       ),
                     );
-                  }).toList(),
+                  }),
                   GestureDetector(
                     onTap: _showAddCategoryDialog,
                     child: Container(
@@ -194,7 +197,7 @@ class _ItemManagementState extends State<ItemManagement> {
   Widget _buildCategoryViews() {
     return Obx(() {
       if (categoryController.isLoading.value) {
-        return Center(
+        return const Center(
           child: CircularProgressIndicator(),
         );
       } else {
@@ -226,7 +229,7 @@ class _ItemManagementState extends State<ItemManagement> {
 
             return GridView.builder(
               shrinkWrap: true,
-              physics: AlwaysScrollableScrollPhysics(),
+              physics: const AlwaysScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: crossAxisCount,
                 mainAxisSpacing: 20.0,
@@ -237,7 +240,7 @@ class _ItemManagementState extends State<ItemManagement> {
               itemBuilder: (context, index) {
                 if (index < items.length) {
                   final item = items[index];
-                  final isNew = isNewItem(item.createdAt as DateTime);
+                  final isNew = isNewItem(item.createdAt);
 
                   return Stack(
                     children: [
@@ -276,25 +279,26 @@ class _ItemManagementState extends State<ItemManagement> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(5.0),
                                   child: Container(
-                                    width: double.infinity,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(2),
-                                      child: CachedNetworkImage(
-                                        imageUrl: item.imageUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (context, url) => Center(
-                                          child: CircularProgressIndicator(),
-                                        ),
-                                        errorWidget: (context, url, error) {
-                                          print('Erreur de chargement: $error');
-                                          return Container();
-                                        },
+                                      //    width: double.infinity,
+                                      //   decoration: BoxDecoration(
+                                      //     borderRadius: BorderRadius.circular(10),
+                                      //   ),
+                                      //    child: ClipRRect(
+                                      //      borderRadius: BorderRadius.circular(2),
+                                      //    child: CachedNetworkImage(
+                                      //     imageUrl: item.imageUrl,
+                                      //     fit: BoxFit.cover,
+                                      //    placeholder: (context, url) => Center(
+                                      //      child: CircularProgressIndicator(),
                                       ),
-                                    ),
-                                  ),
+                                  //   errorWidget: (context, url, error) {
+                                  //     print('Erreur de chargement: $error');
+                                  //    return Icon(Icons.error,
+                                  //     color: Colors.red);
+                                  //   },
+                                  //   ),
+                                  //  ),
+                                  //),
                                 ),
                               ),
                               Padding(
@@ -352,7 +356,7 @@ class _ItemManagementState extends State<ItemManagement> {
                                               ),
                                               Text(
                                                 '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
-                                                style: TextStyle(
+                                                style: const TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 14,
                                                   color: Colors.red,
@@ -383,7 +387,7 @@ class _ItemManagementState extends State<ItemManagement> {
                                           });
                                         });
                                       },
-                                      child: Text(
+                                      child: const Text(
                                         'Modifier',
                                         style: TextStyle(
                                           color: Colors.blue,
@@ -405,9 +409,9 @@ class _ItemManagementState extends State<ItemManagement> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               color: Colors.red,
-                              borderRadius: const BorderRadius.only(
+                              borderRadius: BorderRadius.only(
                                 topLeft: Radius.circular(12),
                                 bottomRight: Radius.circular(8),
                               ),
@@ -426,14 +430,14 @@ class _ItemManagementState extends State<ItemManagement> {
                           child: Container(
                             width: 33,
                             height: 33,
-                            decoration: BoxDecoration(
+                            decoration: const BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.yellowAccent,
                             ),
                             child: Center(
                               child: Text(
                                 '-${item.discount.toString()}%',
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.black,
                                     fontStyle: FontStyle.italic,
                                     fontWeight: FontWeight.bold,
@@ -476,7 +480,7 @@ class _ItemManagementState extends State<ItemManagement> {
     final TextEditingController caloriesController = TextEditingController();
     final TextEditingController imageUrlController = TextEditingController();
     final TextEditingController discountController = TextEditingController();
-    GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
@@ -484,7 +488,7 @@ class _ItemManagementState extends State<ItemManagement> {
         return AlertDialog(
           title: const Text('Ajouter un plat'),
           content: Form(
-            key: _formKey,
+            key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
@@ -556,14 +560,14 @@ class _ItemManagementState extends State<ItemManagement> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: Text(
+              child: const Text(
                 'Annuler',
                 style: TextStyle(color: Colors.redAccent),
               ),
             ),
             TextButton(
               onPressed: () {
-                if (_formKey.currentState!.validate()) {
+                if (formKey.currentState!.validate()) {
                   int? discount = discountController.text.isNotEmpty
                       ? int.parse(discountController.text)
                       : null;
@@ -600,21 +604,22 @@ class _ItemManagementState extends State<ItemManagement> {
   void _showAddCategoryDialog() {
     TextEditingController nameController = TextEditingController();
     TextEditingController imageUrlController = TextEditingController();
-    GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Ajouter une catégorie"),
+          title: const Text("Ajouter une catégorie"),
           content: Form(
-            key: _formKey,
+            key: formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: nameController,
-                  decoration: InputDecoration(labelText: "Nom de la catégorie"),
+                  decoration:
+                      const InputDecoration(labelText: "Nom de la catégorie"),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'entrer le nom de la catégorie ';
@@ -625,7 +630,7 @@ class _ItemManagementState extends State<ItemManagement> {
                 TextFormField(
                   controller: imageUrlController,
                   decoration:
-                      InputDecoration(labelText: "Image de la catégorie"),
+                      const InputDecoration(labelText: "Image de la catégorie"),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'entrer le nom de la catégorie ';
@@ -638,7 +643,7 @@ class _ItemManagementState extends State<ItemManagement> {
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(
+              child: const Text(
                 "Annuler",
                 style: TextStyle(color: Colors.redAccent),
               ),
@@ -652,7 +657,7 @@ class _ItemManagementState extends State<ItemManagement> {
                 style: TextStyle(color: AppTheme.lightTheme.primaryColor),
               ),
               onPressed: () async {
-                if (_formKey.currentState!.validate()) {
+                if (formKey.currentState!.validate()) {
                   Category newCategory = Category(
                     id: 0,
                     name: nameController.text,
@@ -661,13 +666,14 @@ class _ItemManagementState extends State<ItemManagement> {
                     items: [],
                   );
                   await categoryController.addNewCategory(newCategory);
+                  // ignore: use_build_context_synchronously
                   Navigator.of(context).pop();
 
                   Get.snackbar(
                     'Succès',
                     'La catégorie ${newCategory.name} a été ajoutée avec succès.',
                     snackPosition: SnackPosition.BOTTOM,
-                    duration: Duration(seconds: 3),
+                    duration: const Duration(seconds: 3),
                   );
                 }
               },

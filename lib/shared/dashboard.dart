@@ -240,7 +240,7 @@ class DashboardPage extends StatelessWidget {
         intervalType: DateTimeIntervalType.days,
         majorGridLines: MajorGridLines(width: 1),
       ),
-      series: <ChartSeries>[
+      series: <CartesianSeries>[
         ColumnSeries<RevenueData, DateTime>(
           dataSource: revenueData,
           xValueMapper: (RevenueData revenue, _) => revenue.date,
@@ -400,9 +400,9 @@ class OrderItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: NetworkImage(item.imageUrl),
-      ),
+      // leading: CircleAvatar(
+      // backgroundImage: NetworkImage(item.imageUrl),
+      // ),
       title: Text(item.name, style: TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('${item.quantity} commandes'),
       trailing: Container(

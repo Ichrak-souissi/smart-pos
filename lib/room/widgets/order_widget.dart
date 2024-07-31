@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:get/get_state_manager/src/rx_flutter/rx_obx_widget.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/room/controllers/room_controller.dart';
@@ -66,10 +65,8 @@ class _OrderWidgetState extends State<OrderWidget> {
     double supplementsTotal = selectedSupplements.fold(
         0, (sum, supplement) => sum + supplement.price);
 
-    // Calculate the price after discount
     double discount = item.discount?.toDouble() ?? 0;
     double discountedPrice = item.price - (item.price * discount / 100);
-    double totalPrice = (discountedPrice + supplementsTotal) * quantity;
 
     Item newItem = Item(
       id: item.id,
@@ -78,7 +75,7 @@ class _OrderWidgetState extends State<OrderWidget> {
       description: item.description,
       imageUrl: item.imageUrl,
       discount: item.discount,
-      price: discountedPrice + supplementsTotal, // Updated price with discount
+      price: discountedPrice + supplementsTotal,
       calories: item.calories,
       createdAt: item.createdAt,
       supplements: selectedSupplements,
@@ -323,21 +320,6 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                         child: Container(
                                                           width: 150,
                                                           height: 95,
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            shape: BoxShape
-                                                                .rectangle,
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        5),
-                                                            image:
-                                                                DecorationImage(
-                                                              image: NetworkImage(
-                                                                  item.imageUrl),
-                                                              fit: BoxFit.cover,
-                                                            ),
-                                                          ),
                                                         ),
                                                       ),
                                                     ),

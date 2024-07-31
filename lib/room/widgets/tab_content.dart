@@ -10,6 +10,7 @@ import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
+// ignore: must_be_immutable
 class TabContent extends StatefulWidget {
   final Map<Item, int> orderMap;
   final double Function(Map<Item, int>) calculateTotal;
@@ -36,8 +37,8 @@ class _TabContentState extends State<TabContent> {
   @override
   void initState() {
     super.initState();
-    tableController = Get.find();
-    orderController = Get.find();
+    tableController = Get.put(TableController());
+    orderController = Get.put(OrderController());
   }
 
   List<OrderItem> getOrderItemsFromMap(Map<Item, int> orderMap, int orderId) {
@@ -78,7 +79,12 @@ class _TabContentState extends State<TabContent> {
       _showOrderAlert(context);
     } else {
       if (widget.selectedTableId != null) {
+        // Appel à la méthode pour mettre à jour la table
         await tableController.updateTable(widget.selectedTableId!, true);
+
+        // Appel pour obtenir la liste mise à jour des tables de la chambre sélectionnée
+        await roomController
+            .getTablesByRoomId(int.parse(widget.selectedTableId!));
 
         List<OrderItem> orderItems = getOrderItemsFromMap(
             widget.orderMap, counterController.counter.value);
@@ -86,6 +92,7 @@ class _TabContentState extends State<TabContent> {
         Order order = Order(
           tableId: int.parse(widget.selectedTableId!),
           total: widget.calculateTotal(widget.orderMap),
+          isPaid: false,
           orderItems: orderItems,
           status: 1,
           createdAt: DateTime.now(),
@@ -96,9 +103,9 @@ class _TabContentState extends State<TabContent> {
         setState(() {
           widget.orderMap.clear();
         });
-        await roomController.tableList;
-        Navigator.of(context).pop();
       }
+      // ignore: use_build_context_synchronously
+      Navigator.pop(context);
     }
   }
 
@@ -197,9 +204,8 @@ class _TabContentState extends State<TabContent> {
                           final supplements = item.supplements ?? [];
 
                           return Dismissible(
-                            key: Key(item.id.toString()), // Ensure unique key
+                            key: Key(item.id.toString()),
                             onDismissed: (direction) {
-                              // Handle the removal
                               setState(() {
                                 widget.orderMap.remove(item);
                               });
@@ -229,17 +235,20 @@ class _TabContentState extends State<TabContent> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     ListTile(
-                                      leading: item.imageUrl != null
-                                          ? CircleAvatar(
-                                              radius: 40,
-                                              backgroundImage:
-                                                  NetworkImage(item.imageUrl),
-                                            )
-                                          : const CircleAvatar(
-                                              radius: 30,
-                                              child:
-                                                  Icon(Icons.image, size: 30),
-                                            ),
+                                      // Commenté pour ne pas afficher l'image
+                                      // leading: item.imageUrl != null
+                                      //   ? CircleAvatar(
+                                      //       radius: 30,
+                                      //       backgroundImage: NetworkImage(item.imageUrl),
+                                      //     )
+                                      //   : const CircleAvatar(
+                                      //       radius: 30,
+                                      //       child: Icon(Icons.image, size: 30),
+                                      //     ),
+                                      leading: const CircleAvatar(
+                                        radius: 30,
+                                        child: Icon(Icons.image, size: 30),
+                                      ),
                                       title: Text(
                                         item.name,
                                         style: const TextStyle(
@@ -386,20 +395,33 @@ class _TabContentState extends State<TabContent> {
                           ),
                         ],
                       ),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: ElevatedButton(
-                          onPressed: () => _handleOrderSubmit(context),
-                          child: Text(
-                            'Passer la commande',
-                            style: TextStyle(
-                                color: AppTheme.lightTheme.primaryColor),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'Annuler ',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      _handleOrderSubmit(context);
+                      roomController.getRoomList();
+                    },
+                    child: Text(
+                      'Passer la commande',
+                      style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+                    ),
+                  ),
+                ],
               ),
             ],
           );

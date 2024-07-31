@@ -33,19 +33,18 @@ class RoomController extends GetxController {
         final List<dynamic> roomsJson = response.data;
         final List<Room> rooms =
             roomsJson.map((roomJson) => Room.fromJson(roomJson)).toList();
-        isLoading.value = false;
         roomList.assignAll(rooms);
         print('List of rooms: $rooms');
-        return roomList;
       } else {
-        isLoading.value = false;
-        return [];
+        print('Failed to get rooms. Status code: ${response.statusCode}');
+        roomList.clear();
       }
     } catch (e) {
-      isLoading.value = false;
       print('Error getting room list: $e');
-      rethrow;
+    } finally {
+      isLoading.value = false;
     }
+    return roomList;
   }
 
   Future<List<Table>> getTablesByRoomId(int roomId) async {
@@ -63,20 +62,20 @@ class RoomController extends GetxController {
         final List<dynamic> tablesJson = response.data;
         final List<Table> tables =
             tablesJson.map((tableJson) => Table.fromJson(tableJson)).toList();
-        isLoading.value = false;
         tables.sort((a, b) => a.position.compareTo(b.position));
         tableList.assignAll(tables);
         print('List of tables for room ID $roomId: $tables');
-        return tableList;
       } else {
-        isLoading.value = false;
-        return [];
+        print(
+            'Failed to get tables for room ID $roomId. Status code: ${response.statusCode}');
+        tableList.clear();
       }
     } catch (e) {
-      isLoading.value = false;
       print('Error getting tables for room ID $roomId: $e');
-      rethrow;
+    } finally {
+      isLoading.value = false;
     }
+    return tableList;
   }
 
   void addRoom(Room room) async {
@@ -91,26 +90,22 @@ class RoomController extends GetxController {
           },
         ),
       );
-
       if (response.statusCode == 200) {
         roomList.insert(0, room);
-        isLoading.value = false;
         print('Room added successfully: ${response.data}');
       } else {
-        isLoading.value = false;
         print('Failed to add room. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      isLoading.value = false;
       print('Error adding room: $e');
-      rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 
   void addTable(Table table) async {
     try {
       isLoading.value = true;
-
       final response = await _clientDio.dio.post(
         Constants.addTableUrl(),
         data: table.toJson(),
@@ -120,23 +115,19 @@ class RoomController extends GetxController {
           },
         ),
       );
-
       if (response.statusCode == 200) {
         tableList.add(table);
-        isLoading.value = false;
         print('Table added successfully: ${response.data}');
       } else {
-        isLoading.value = false;
         print('Failed to add table. Status code: ${response.statusCode}');
         if (response.statusCode == 409) {
           print('A table already exists at this position in the same room.');
         }
       }
     } catch (e) {
-      isLoading.value = false;
       print('Error adding table: $e');
-      print('An unexpected error occurred while adding the table.');
-      rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -151,19 +142,16 @@ class RoomController extends GetxController {
           },
         ),
       );
-
       if (response.statusCode == 200) {
         roomList.remove(room);
-        isLoading.value = false;
         print('Room deleted successfully');
       } else {
-        isLoading.value = false;
         print('Failed to delete room. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      isLoading.value = false;
       print('Error deleting room: $e');
-      rethrow;
+    } finally {
+      isLoading.value = false;
     }
   }
 }
