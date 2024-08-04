@@ -20,14 +20,11 @@ class CircularTable extends StatelessWidget {
     String tableImage = 'assets/images/table6.svg';
 
     if (capacity == 2) {
-      tableImage =
-          'assets/images/table22.svg'; // Affiche table2 pour capacité de 2
+      tableImage = 'assets/images/table22.svg';
     } else if (capacity == 4) {
-      tableImage =
-          'assets/images/table4.svg'; // Affiche table4 pour capacité de 4
+      tableImage = 'assets/images/table4.svg';
     } else {
-      tableImage =
-          'assets/images/table6.svg'; // Affiche table6 pour les autres capacités
+      tableImage = 'assets/images/table6.svg';
     }
 
     return Container(

@@ -25,7 +25,7 @@ class _OrderWidgetState extends State<OrderWidget> {
 
   int selectedCardIndex = 0;
   final TextEditingController _searchController = TextEditingController();
-  Map<Item, int> orderMap = {};
+  final RxMap<Item, int> orderMap = <Item, int>{}.obs;
 
   double calculateTotal(Map<Item, int> orderMap) {
     double total = 0;
@@ -60,8 +60,8 @@ class _OrderWidgetState extends State<OrderWidget> {
     return createdAt.isAfter(weekAgo);
   }
 
-  Map<Item, int> addToOrder(Item item, int quantity,
-      List<Supplement> selectedSupplements, double total) {
+  void addToOrder(Item item, int quantity, List<Supplement> selectedSupplements,
+      double totalItemPrice) {
     double supplementsTotal = selectedSupplements.fold(
         0, (sum, supplement) => sum + supplement.price);
 
@@ -83,7 +83,7 @@ class _OrderWidgetState extends State<OrderWidget> {
 
     print('Selected supplements: $selectedSupplements');
 
-    Map<Item, int> newOrderMap = Map.from(orderMap);
+    final newOrderMap = Map<Item, int>.from(orderMap.value);
 
     if (newOrderMap.containsKey(newItem)) {
       newOrderMap[newItem] = newOrderMap[newItem]! + quantity;
@@ -92,11 +92,7 @@ class _OrderWidgetState extends State<OrderWidget> {
     }
     tableController.calculateTableOccupancy();
 
-    setState(() {
-      orderMap = newOrderMap;
-    });
-
-    return orderMap;
+    orderMap.value = newOrderMap;
   }
 
   int _calculateCrossAxisCount(double width) {

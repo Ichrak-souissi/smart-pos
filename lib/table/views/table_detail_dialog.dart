@@ -9,7 +9,8 @@ class TableDetailsDialog {
   final BuildContext context;
   final List<Order> ordersForSelectedTable;
 
-  TableDetailsDialog(this.context, this.ordersForSelectedTable);
+  TableDetailsDialog(this.context, this.ordersForSelectedTable,
+      {required Table table});
 
   void show(table) {
     showDialog(

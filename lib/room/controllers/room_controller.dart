@@ -92,6 +92,7 @@ class RoomController extends GetxController {
       );
       if (response.statusCode == 200) {
         roomList.insert(0, room);
+        roomList.refresh;
         print('Room added successfully: ${response.data}');
       } else {
         print('Failed to add room. Status code: ${response.statusCode}');
@@ -144,6 +145,7 @@ class RoomController extends GetxController {
       );
       if (response.statusCode == 200) {
         roomList.remove(room);
+        roomList.refresh;
         print('Room deleted successfully');
       } else {
         print('Failed to delete room. Status code: ${response.statusCode}');

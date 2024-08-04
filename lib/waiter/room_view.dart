@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
@@ -21,16 +22,16 @@ class RoomView extends StatefulWidget {
 }
 
 class _RoomViewState extends State<RoomView> {
-  final RoomController roomController = Get.put(RoomController());
+  RxInt selectedRoomIndex = 0.obs;
+  final TableController tableController = Get.put(TableController());
+  Rx<pos_table.Table?> selectedTable = Rx<pos_table.Table?>(null);
+  RxList<Order> ordersForSelectedTable = RxList<Order>();
+  RxList<OrderItem> orderItems = RxList<OrderItem>();
+  RxBool showExpanded = false.obs;
   final OrderController orderController = Get.put(OrderController());
   final OrderItemController orderItemController =
       Get.put(OrderItemController());
-  int selectedRoomIndex = 0;
-  pos_table.Table? selectedTable;
-  RxList<Order> ordersForSelectedTable = RxList<Order>();
-  RxList<OrderItem> orderItems = RxList<OrderItem>();
-  final TableController tableController = Get.put(TableController());
-  bool showExpanded = false;
+  final RoomController roomController = Get.put(RoomController());
 
   @override
   void initState() {
@@ -63,17 +64,17 @@ class _RoomViewState extends State<RoomView> {
     if (roomController.roomList.isNotEmpty) {
       await roomController.getTablesByRoomId(roomController.roomList[0].id);
       setState(() {
-        selectedRoomIndex = 0;
+        selectedRoomIndex = 0.obs;
       });
     }
   }
 
   void _onTableSelected(pos_table.Table table) {
     setState(() {
-      selectedTable = table;
-      showExpanded = false;
+      selectedTable = table.obs;
+      showExpanded = false.obs;
     });
-    _loadOrdersAndItemsByTableId(selectedTable!.id);
+    _loadOrdersAndItemsByTableId(selectedTable.value!.id);
     if (table.active) {
       _showOptionsDialog(context);
     } else if (table.active == false) {
@@ -113,7 +114,7 @@ class _RoomViewState extends State<RoomView> {
                 onTap: () {
                   Navigator.of(context).pop();
                   setState(() {
-                    showExpanded = true;
+                    showExpanded.value = true;
                   });
                 },
               ),
@@ -121,25 +122,27 @@ class _RoomViewState extends State<RoomView> {
                 contentPadding:
                     EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                 leading: Icon(
-                  selectedTable!.active ? Icons.lock : Icons.lock_open,
+                  selectedTable.value!.active ? Icons.lock : Icons.lock_open,
                   color: Colors.redAccent,
                   size: 28,
                 ),
                 title: Text(
-                  selectedTable!.active ? 'Table occupée' : 'Table disponible',
+                  selectedTable.value!.active
+                      ? 'Table occupée'
+                      : 'Table disponible',
                   style: TextStyle(fontSize: 16),
                 ),
                 trailing: Switch(
-                  value: !selectedTable!.active,
+                  value: !selectedTable.value!.active,
                   onChanged: (bool value) {
                     Navigator.of(context).pop();
                     setState(() {
-                      selectedTable!.active = !value;
+                      selectedTable.value!.active = !value;
                     });
                     tableController.updateTable(
-                        selectedTable!.id.toString(), !value);
+                        selectedTable.value!.id.toString(), !value);
                     roomController.getTablesByRoomId(
-                        roomController.roomList[selectedRoomIndex].id);
+                        roomController.roomList[selectedRoomIndex.value].id);
                   },
                 ),
               ),
@@ -164,11 +167,15 @@ class _RoomViewState extends State<RoomView> {
       builder: (BuildContext context) {
         return Dialog(
           child: OrderWidget(
-            selectedTableId: selectedTable!.id,
+            selectedTableId: selectedTable.value!.id,
           ),
         );
       },
-    );
+    ).then((_) {
+      roomController.getTablesByRoomId(
+        roomController.roomList[selectedRoomIndex.value].id,
+      );
+    });
   }
 
   void _showPaymentDialog() {
@@ -233,8 +240,7 @@ class _RoomViewState extends State<RoomView> {
                         ),
                         onTap: (index) async {
                           setState(() {
-                            selectedRoomIndex = index;
-                            selectedTable = null;
+                            selectedRoomIndex.value = index;
                           });
                           await roomController.getTablesByRoomId(
                               roomController.roomList[index].id);
@@ -287,9 +293,9 @@ class _RoomViewState extends State<RoomView> {
                   ],
                 ),
               ),
-              if (selectedTable != null &&
-                  selectedTable!.active &&
-                  showExpanded)
+              if (selectedTable.value != null &&
+                  selectedTable.value!.active &&
+                  showExpanded.value)
                 Expanded(
                   flex: 2,
                   child: Container(
@@ -316,7 +322,7 @@ class _RoomViewState extends State<RoomView> {
                             ),
                             padding: EdgeInsets.all(6),
                             child: Text(
-                              'Table N°${selectedTable!.position}',
+                              'Table N°${selectedTable.value!.position}',
                               style: TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -339,7 +345,7 @@ class _RoomViewState extends State<RoomView> {
                               Row(
                                 children: [
                                   Text(
-                                    '${selectedTable!.capacity}',
+                                    '${selectedTable.value!.capacity}',
                                     style: TextStyle(fontSize: 16),
                                   ),
                                   Icon(Icons.person, size: 20),
@@ -359,10 +365,12 @@ class _RoomViewState extends State<RoomView> {
                                 ),
                               ),
                               Text(
-                                selectedTable!.active ? 'Occupé' : 'Disponible',
+                                selectedTable.value!.active
+                                    ? 'Occupé'
+                                    : 'Disponible',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: selectedTable!.active
+                                  color: selectedTable.value!.active
                                       ? AppTheme.lightTheme.primaryColor
                                       : Colors.blue,
                                 ),
@@ -581,9 +589,15 @@ class _RoomViewState extends State<RoomView> {
                                             orders: ordersForSelectedTable,
                                           );
                                         },
-                                      );
+                                      ).then((_) {
+                                        roomController.getTablesByRoomId(
+                                          roomController
+                                              .roomList[selectedRoomIndex.value]
+                                              .id,
+                                        );
+                                      });
                                       setState(() {
-                                        showExpanded = false;
+                                        showExpanded.value = false;
                                       });
                                     },
                                     style: ElevatedButton.styleFrom(

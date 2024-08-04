@@ -12,7 +12,6 @@ class ItemManagement extends StatefulWidget {
   const ItemManagement({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ItemManagementState createState() => _ItemManagementState();
 }
 
@@ -33,6 +32,7 @@ class _ItemManagementState extends State<ItemManagement> {
     if (categoryController.categoryList.isNotEmpty) {
       await categoryController
           .getItemsByCategoryId(categoryController.categoryList[0].id);
+      setState(() {}); // To refresh the UI
     }
   }
 
@@ -64,11 +64,13 @@ class _ItemManagementState extends State<ItemManagement> {
     );
   }
 
-  Future<void> _onCategoryChanged(int index) async {
-    await categoryController.getItemsByCategoryId(
-      categoryController.categoryList[index].id,
-    );
-    setState(() {});
+  void _onCategoryChanged(int index) async {
+    if (categoryController.categoryList.isNotEmpty) {
+      await categoryController.getItemsByCategoryId(
+        categoryController.categoryList[index].id,
+      );
+      setState(() {});
+    }
   }
 
   void _showDeleteCategoryDialog(Category category) {
@@ -115,6 +117,10 @@ class _ItemManagementState extends State<ItemManagement> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Obx(() {
+              if (categoryController.categoryList.isEmpty) {
+                return const Text('No categories available');
+              }
+
               return Row(
                 children: [
                   ...categoryController.categoryList
@@ -200,9 +206,20 @@ class _ItemManagementState extends State<ItemManagement> {
         return const Center(
           child: CircularProgressIndicator(),
         );
+      } else if (categoryController.categoryList.isEmpty) {
+        return const Center(
+          child: Text('No categories available'),
+        );
       } else {
-        return _buildItemsGridView(
-            categoryController.categoryList[selectedCategoryIndex]);
+        // Ensure selectedCategoryIndex is within bounds
+        final int safeIndex =
+            (selectedCategoryIndex < categoryController.categoryList.length &&
+                    selectedCategoryIndex >= 0)
+                ? selectedCategoryIndex
+                : 0;
+        final category = categoryController.categoryList[safeIndex];
+
+        return _buildItemsGridView(category);
       }
     });
   }
@@ -220,31 +237,51 @@ class _ItemManagementState extends State<ItemManagement> {
 
   Widget _buildItemsGridView(Category category) {
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
-          return Obx(() {
-            var items = categoryController.categoryItems;
+        padding: const EdgeInsets.all(8.0),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
+            return Obx(() {
+              var items = categoryController.categoryItems;
 
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const AlwaysScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-                mainAxisSpacing: 20.0,
-                crossAxisSpacing: 20.0,
-                childAspectRatio: 0.8,
-              ),
-              itemCount: items.length + 1,
-              itemBuilder: (context, index) {
-                if (index < items.length) {
-                  final item = items[index];
-                  final isNew = isNewItem(item.createdAt);
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const AlwaysScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  mainAxisSpacing: 20.0,
+                  crossAxisSpacing: 20.0,
+                  childAspectRatio: 0.8,
+                ),
+                itemCount: items.length + 1,
+                itemBuilder: (context, index) {
+                  if (index < items.length) {
+                    final item = items[index];
+                    final isNew = isNewItem(item.createdAt);
 
-                  return Stack(
-                    children: [
-                      GestureDetector(
+                    return Dismissible(
+                      key: Key(item.id.toString()),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (direction) async {
+                        await categoryController.deleteItem(item.id);
+                        // Reload items after deletion
+                        await categoryController
+                            .getItemsByCategoryId(category.id);
+                        setState(() {}); // Refresh the UI
+                        Get.snackbar(
+                          'Succès',
+                          'L\'item ${item.name} a été supprimé avec succès.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 3),
+                        );
+                      },
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      child: GestureDetector(
                         onTap: () async {
                           final updatedItem = await showDialog<Item>(
                             context: context,
@@ -279,26 +316,8 @@ class _ItemManagementState extends State<ItemManagement> {
                                 child: Padding(
                                   padding: const EdgeInsets.all(5.0),
                                   child: Container(
-                                      //    width: double.infinity,
-                                      //   decoration: BoxDecoration(
-                                      //     borderRadius: BorderRadius.circular(10),
-                                      //   ),
-                                      //    child: ClipRRect(
-                                      //      borderRadius: BorderRadius.circular(2),
-                                      //    child: CachedNetworkImage(
-                                      //     imageUrl: item.imageUrl,
-                                      //     fit: BoxFit.cover,
-                                      //    placeholder: (context, url) => Center(
-                                      //      child: CircularProgressIndicator(),
+                                      // Your image code here
                                       ),
-                                  //   errorWidget: (context, url, error) {
-                                  //     print('Erreur de chargement: $error');
-                                  //    return Icon(Icons.error,
-                                  //     color: Colors.red);
-                                  //   },
-                                  //   ),
-                                  //  ),
-                                  //),
                                 ),
                               ),
                               Padding(
@@ -402,75 +421,29 @@ class _ItemManagementState extends State<ItemManagement> {
                           ),
                         ),
                       ),
-                      if (isNew)
-                        Positioned(
-                          top: 0,
-                          left: 0,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 5, vertical: 2),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                bottomRight: Radius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              'Nouveau',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 10),
-                            ),
+                    );
+                  } else {
+                    return GestureDetector(
+                      onTap: _showAddItemDialog,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.grey.shade200,
+                            width: 1,
                           ),
+                          color: Colors.grey.shade100,
                         ),
-                      if (item.discount != null && item.discount != 0)
-                        Positioned(
-                          top: 5,
-                          right: 5,
-                          child: Container(
-                            width: 33,
-                            height: 33,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.yellowAccent,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '-${item.discount.toString()}%',
-                                style: const TextStyle(
-                                    color: Colors.black,
-                                    fontStyle: FontStyle.italic,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  );
-                } else {
-                  return GestureDetector(
-                    onTap: _showAddItemDialog,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.grey.shade200,
-                          width: 1,
-                        ),
-                        color: Colors.grey.shade100,
+                        child: Icon(Icons.add,
+                            size: 50, color: AppTheme.lightTheme.primaryColor),
                       ),
-                      child: Icon(Icons.add,
-                          size: 50, color: AppTheme.lightTheme.primaryColor),
-                    ),
-                  );
-                }
-              },
-            );
-          });
-        },
-      ),
-    );
+                    );
+                  }
+                },
+              );
+            });
+          },
+        ));
   }
 
   Future<void> _showAddItemDialog() async {
@@ -557,43 +530,34 @@ class _ItemManagementState extends State<ItemManagement> {
           ),
           actions: <Widget>[
             TextButton(
+              child: const Text('Annuler'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text(
-                'Annuler',
-                style: TextStyle(color: Colors.redAccent),
-              ),
             ),
             TextButton(
-              onPressed: () {
+              child: const Text('Ajouter'),
+              onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   int? discount = discountController.text.isNotEmpty
                       ? int.parse(discountController.text)
                       : null;
-
-                  final newItem = Item(
-                    id: 0,
-                    name: nameController.text,
-                    description: descriptionController.text,
-                    price: double.parse(priceController.text),
-                    imageUrl: imageUrlController.text,
-                    calories: int.parse(caloriesController.text),
-                    isActive: true,
-                    categoryId: categoryController
-                        .categoryList[selectedCategoryIndex].id,
-                    createdAt: DateTime.now(),
-                    discount: discount,
-                  );
-
-                  categoryController.addNewItem(newItem);
+                  await categoryController.addNewItem(Item(
+                      id: 0,
+                      name: nameController.text,
+                      description: descriptionController.text,
+                      price: double.parse(priceController.text),
+                      imageUrl: imageUrlController.text,
+                      calories: int.parse(caloriesController.text),
+                      isActive: true,
+                      categoryId: categoryController
+                          .categoryList[selectedCategoryIndex].id,
+                      createdAt: DateTime.now(),
+                      discount: discount));
                   Navigator.of(context).pop();
                 }
+                setState(() {});
               },
-              child: Text(
-                'Ajouter',
-                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
-              ),
             ),
           ],
         );
@@ -622,22 +586,12 @@ class _ItemManagementState extends State<ItemManagement> {
                       const InputDecoration(labelText: "Nom de la catégorie"),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'entrer le nom de la catégorie ';
+                      return 'Entrer le nom de la catégorie';
                     }
                     return null;
                   },
                 ),
-                TextFormField(
-                  controller: imageUrlController,
-                  decoration:
-                      const InputDecoration(labelText: "Image de la catégorie"),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'entrer le nom de la catégorie ';
-                    }
-                    return null;
-                  },
-                ),
+                // Autres champs de formulaire
               ],
             ),
           ),
@@ -659,16 +613,17 @@ class _ItemManagementState extends State<ItemManagement> {
               onPressed: () async {
                 if (formKey.currentState!.validate()) {
                   Category newCategory = Category(
-                    id: 0,
+                    id: categoryController.categoryList.length + 1,
                     name: nameController.text,
                     imageUrl: imageUrlController.text,
                     isActive: true,
                     items: [],
                   );
                   await categoryController.addNewCategory(newCategory);
-                  // ignore: use_build_context_synchronously
                   Navigator.of(context).pop();
-
+                  // Rafraîchir la liste des catégories après ajout
+                  await categoryController.getCategoryList();
+                  setState(() {});
                   Get.snackbar(
                     'Succès',
                     'La catégorie ${newCategory.name} a été ajoutée avec succès.',

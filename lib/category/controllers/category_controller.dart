@@ -34,12 +34,9 @@ class CategoryController extends GetxController {
             .map((categoryJson) => Category.fromJson(categoryJson))
             .toList();
         categoryList.assignAll(categories);
-      } else {
-        // Handle non-200 responses if needed
-      }
+      } else {}
     } catch (e) {
       print('Error fetching categories: $e');
-      // Optionally handle or show error
     } finally {
       isLoading.value = false;
     }
@@ -55,13 +52,13 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 200) {
         categoryList.remove(category);
-        // Show success message or feedback
+        categoryList.refresh();
       } else {
-        // Handle non-200 responses if needed
+        print(
+            'Failed to delete category: ${response.statusCode} ${response.statusMessage}');
       }
     } catch (e) {
       print('Error deleting category: $e');
-      // Optionally handle or show error
     }
   }
 
@@ -89,12 +86,10 @@ class CategoryController extends GetxController {
         items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
         originalItems = List.from(items);
         categoryItems.assignAll(items);
-      } else {
-        // Handle non-200 responses if needed
-      }
+        categoryItems.refresh();
+      } else {}
     } catch (e) {
       print('Error fetching items by category ID: $e');
-      // Optionally handle or show error
     } finally {
       isLoading.value = false;
     }
@@ -120,13 +115,9 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 201) {
         categoryItems.add(newItem);
-        // Show success message or feedback
-      } else {
-        // Handle non-201 responses if needed
-      }
+      } else {}
     } catch (e) {
       print('Error adding new item: $e');
-      // Optionally handle or show error
     }
   }
 
@@ -140,13 +131,10 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 200) {
         categoryItems.removeWhere((item) => item.id == itemId);
-        // Show success message or feedback
-      } else {
-        // Handle non-200 responses if needed
-      }
+        categoryItems.refresh();
+      } else {}
     } catch (e) {
       print('Error deleting item: $e');
-      // Optionally handle or show error
     }
   }
 
@@ -176,13 +164,10 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 201) {
         categoryList.add(newCategory);
-        // Show success message or feedback
-      } else {
-        // Handle non-201 responses if needed
-      }
+        categoryList.refresh();
+      } else {}
     } catch (e) {
       print('Error adding new category: $e');
-      // Optionally handle or show error
     }
   }
 }

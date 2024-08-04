@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 import 'package:pos/constants.dart';
 import 'package:pos/order/models/order.dart';
 

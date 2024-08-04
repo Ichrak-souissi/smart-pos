@@ -46,14 +46,18 @@ class _RoomViewState extends State<RoomViewAdmin> {
       setState(() {
         selectedRoomIndex = 0;
       });
+    } else {
+      setState(() {
+        selectedRoomIndex = -1;
+      });
     }
   }
 
   Future<void> _onRoomChanged(int index) async {
-    await roomController.getTablesByRoomId(
-      roomController.roomList[index].id,
-    );
-    setState(() {});
+    if (index >= 0 && index < roomController.roomList.length) {
+      await roomController.getTablesByRoomId(roomController.roomList[index].id);
+      setState(() {});
+    }
   }
 
   Future<void> _loadRoomTables(int roomId) async {
@@ -88,7 +92,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<int>(
-                      value: roomController.roomList[selectedRoomIndex].id,
+                      value: selectedRoomIndex >= 0
+                          ? roomController.roomList[selectedRoomIndex].id
+                          : null,
                       onChanged: (int? newValue) {
                         setState(() {
                           selectedRoomIndex = roomController.roomList
@@ -313,6 +319,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
 
                   roomController.addRoom(room);
                   roomController.roomList.add(room);
+                  setState(() {
+                    roomController.getRoomList();
+                  });
 
                   Navigator.of(context).pop();
                 }
@@ -330,8 +339,8 @@ class _RoomViewState extends State<RoomViewAdmin> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Supprimer la salle'),
-          content: Text(
-              'Êtes-vous sûr de vouloir supprimer la salle ${room.name} ?'),
+          content:
+              Text('Êtes-vous sûr de vouloir supprimer la salle ${room.name}?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -342,7 +351,15 @@ class _RoomViewState extends State<RoomViewAdmin> {
             TextButton(
               onPressed: () async {
                 await roomController.deleteRoom(room);
-                _loadRoomTables(room.id);
+                setState(() {
+                  if (selectedRoomIndex >= roomController.roomList.length) {
+                    selectedRoomIndex = roomController.roomList.length - 1;
+                  }
+                  if (selectedRoomIndex >= 0) {
+                    _onRoomChanged(selectedRoomIndex);
+                  }
+                });
+
                 Navigator.of(context).pop();
 
                 Get.snackbar(
@@ -508,9 +525,13 @@ class _RoomViewState extends State<RoomViewAdmin> {
                               crossAxisSpacing: 2.0,
                               childAspectRatio: 1.5,
                             ),
-                            itemCount: roomController.tableList.length,
+                            itemCount: selectedRoomIndex >= 0
+                                ? roomController
+                                    .roomList[selectedRoomIndex].tables.length
+                                : 0,
                             itemBuilder: (context, index) {
-                              final table = roomController.tableList[index];
+                              final table = roomController
+                                  .roomList[selectedRoomIndex].tables[index];
                               Color borderColor;
                               if (table.active) {
                                 borderColor =
@@ -527,6 +548,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                       TableDetailsDialog(
                                         context,
                                         ordersForSelectedTable,
+                                        table: selectedTable,
                                       ).show(selectedTable);
                                       _loadOrdersAndItemsByTableId(
                                           selectedTable.id);

@@ -171,6 +171,7 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
                             await orderController.UpdateOrder(
                                 order.id.toString());
                           }
+
                           Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(

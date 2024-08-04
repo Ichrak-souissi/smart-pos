@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/order-item/models/order-item.dart';
@@ -10,7 +9,6 @@ import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
-// ignore: must_be_immutable
 class TabContent extends StatefulWidget {
   final Map<Item, int> orderMap;
   final double Function(Map<Item, int>) calculateTotal;
@@ -79,12 +77,7 @@ class _TabContentState extends State<TabContent> {
       _showOrderAlert(context);
     } else {
       if (widget.selectedTableId != null) {
-        // Appel à la méthode pour mettre à jour la table
         await tableController.updateTable(widget.selectedTableId!, true);
-
-        // Appel pour obtenir la liste mise à jour des tables de la chambre sélectionnée
-        await roomController
-            .getTablesByRoomId(int.parse(widget.selectedTableId!));
 
         List<OrderItem> orderItems = getOrderItemsFromMap(
             widget.orderMap, counterController.counter.value);
