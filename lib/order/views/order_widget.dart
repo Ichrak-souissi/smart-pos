@@ -1,3 +1,5 @@
+// ignore_for_file: prefer_const_constructors
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
@@ -28,14 +30,20 @@ class _OrderWidgetState extends State<OrderWidget> {
   final RxMap<Item, int> orderMap = <Item, int>{}.obs;
 
   double calculateTotal(Map<Item, int> orderMap) {
-    double total = 0;
-    for (var entry in orderMap.entries) {
+    return orderMap.entries.fold(0.0, (sum, entry) {
       final item = entry.key;
       final quantity = entry.value;
-      final totalPrice = item.price * quantity;
-      total += totalPrice;
-    }
-    return total;
+
+      final supplementsTotal = item.supplements?.fold(
+            0.0,
+            (subSum, supplement) => subSum + supplement.price,
+          ) ??
+          0.0;
+
+      final itemTotalPrice = (item.price) * quantity;
+
+      return sum + itemTotalPrice;
+    });
   }
 
   @override
@@ -81,9 +89,7 @@ class _OrderWidgetState extends State<OrderWidget> {
       supplements: selectedSupplements,
     );
 
-    print('Selected supplements: $selectedSupplements');
-
-    final newOrderMap = Map<Item, int>.from(orderMap.value);
+    final newOrderMap = Map<Item, int>.from(orderMap);
 
     if (newOrderMap.containsKey(newItem)) {
       newOrderMap[newItem] = newOrderMap[newItem]! + quantity;
@@ -93,6 +99,7 @@ class _OrderWidgetState extends State<OrderWidget> {
     tableController.calculateTableOccupancy();
 
     orderMap.value = newOrderMap;
+    setState(() {});
   }
 
   int _calculateCrossAxisCount(double width) {
@@ -293,6 +300,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                                         final item = categoryController
                                             .categoryItems[index];
                                         final isNew = isNewItem(item.createdAt);
+
                                         return Stack(
                                           children: [
                                             Container(
@@ -300,40 +308,67 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                 borderRadius:
                                                     BorderRadius.circular(10),
                                                 border: Border.all(
-                                                    color: Colors.grey.shade200,
-                                                    width: 1),
-                                                color: Colors.white,
+                                                  color: item.isActive
+                                                      ? Colors.grey.shade200
+                                                      : Colors.grey.shade500,
+                                                  width: 1,
+                                                ),
+                                                color: item.isActive
+                                                    ? Colors.white
+                                                    : Colors.grey.shade300,
                                               ),
-                                              child: Center(
-                                                child: Column(
-                                                  children: [
-                                                    const SizedBox(height: 10),
-                                                    Expanded(
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .all(5.0),
-                                                        child: Container(
-                                                          width: 150,
-                                                          height: 95,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    Padding(
+                                              child: Column(
+                                                children: [
+                                                  Expanded(
+                                                    child: Padding(
                                                       padding:
                                                           const EdgeInsets.all(
                                                               5.0),
-                                                      child: Text(
-                                                        item.name,
-                                                        style: const TextStyle(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 17,
+                                                      child: Container(
+                                                        width: double.infinity,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          image:
+                                                              DecorationImage(
+                                                            image: NetworkImage(
+                                                                item.imageUrl),
+                                                            fit: BoxFit.cover,
+                                                            colorFilter: item
+                                                                    .isActive
+                                                                ? null
+                                                                : ColorFilter
+                                                                    .mode(
+                                                                    Colors.grey,
+                                                                    BlendMode
+                                                                        .saturation,
+                                                                  ),
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(10),
                                                         ),
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
                                                       ),
                                                     ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            5.0),
+                                                    child: Text(
+                                                      item.name,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 17,
+                                                        color: item.isActive
+                                                            ? Colors.black
+                                                            : Colors.grey,
+                                                      ),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  if (item.isActive)
                                                     Row(
                                                       children: [
                                                         const Padding(
@@ -359,6 +394,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                         ),
                                                       ],
                                                     ),
+                                                  if (item.isActive)
                                                     Row(
                                                       mainAxisAlignment:
                                                           MainAxisAlignment
@@ -395,7 +431,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                                     Text(
                                                                       '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
                                                                       style:
-                                                                          TextStyle(
+                                                                          const TextStyle(
                                                                         fontWeight:
                                                                             FontWeight.bold,
                                                                         fontSize:
@@ -423,12 +459,14 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                         ),
                                                         GestureDetector(
                                                           onTap: () {
-                                                            ItemView().show(
-                                                              context,
-                                                              item,
-                                                              1,
-                                                              addToOrder,
-                                                            );
+                                                            if (item.isActive) {
+                                                              ItemView().show(
+                                                                context,
+                                                                item,
+                                                                1,
+                                                                addToOrder,
+                                                              );
+                                                            }
                                                           },
                                                           child: Padding(
                                                             padding:
@@ -441,9 +479,13 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                                   BoxDecoration(
                                                                 shape: BoxShape
                                                                     .circle,
-                                                                color: AppTheme
-                                                                    .lightTheme
-                                                                    .primaryColor,
+                                                                color: item
+                                                                        .isActive
+                                                                    ? AppTheme
+                                                                        .lightTheme
+                                                                        .primaryColor
+                                                                    : Colors
+                                                                        .grey,
                                                               ),
                                                               child:
                                                                   const Center(
@@ -458,10 +500,34 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                         ),
                                                       ],
                                                     ),
-                                                  ],
-                                                ),
+                                                ],
                                               ),
                                             ),
+                                            if (!item.isActive)
+                                              Positioned.fill(
+                                                child: Container(
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey
+                                                        .withOpacity(0.5),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            10),
+                                                  ),
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Non disponible',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 18,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
                                             if (isNew)
                                               Positioned(
                                                 top: 0,
@@ -499,19 +565,17 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                   width: 33,
                                                   height: 33,
                                                   decoration: BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                    color: Colors.yellowAccent,
+                                                    color: Colors.red,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            16.5),
                                                   ),
                                                   child: Center(
                                                     child: Text(
-                                                      '-${item.discount.toString()}%',
-                                                      style: TextStyle(
-                                                          color: Colors.black,
-                                                          fontStyle:
-                                                              FontStyle.italic,
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 13),
+                                                      '-${item.discount}%',
+                                                      style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontSize: 12),
                                                     ),
                                                   ),
                                                 ),

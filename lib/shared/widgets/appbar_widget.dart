@@ -12,15 +12,15 @@ class AppBarWidget extends StatelessWidget {
     final userRole = storage.read('userRole') ?? "manager";
 
     return Padding(
-      padding: const EdgeInsets.all(6.0),
+      padding: const EdgeInsets.all(8.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Container(
-            constraints: BoxConstraints(maxWidth: 130, maxHeight: 100),
+            constraints: BoxConstraints(maxWidth: 170, maxHeight: 150),
             child: Image.asset(
               'assets/images/logo.png',
-              fit: BoxFit.cover,
+              fit: BoxFit.fill,
             ),
           ),
           const SizedBox(width: 20),
@@ -28,9 +28,6 @@ class AppBarWidget extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                _buildSearchBar(),
-                SizedBox(width: 8),
-                _buildPopupMenuButton(),
                 SizedBox(width: 10),
                 _buildNotification(),
                 SizedBox(width: 10),
@@ -41,59 +38,6 @@ class AppBarWidget extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSearchBar() {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.all(10),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(15),
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.3),
-                spreadRadius: 1,
-                blurRadius: 3,
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: GestureDetector(
-                  onTap: () {},
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 30),
-                    child: Container(
-                      width: double.infinity,
-                      height: 30,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.grey.shade700,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.shade300,
-                            offset: const Offset(0, 2),
-                            blurRadius: 4,
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child:
-                            Icon(Icons.search, color: Colors.white, size: 20),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -136,43 +80,6 @@ class AppBarWidget extends StatelessWidget {
       ),
       child: Center(
         child: FaIcon(FontAwesomeIcons.cog, color: Colors.black54, size: 25),
-      ),
-    );
-  }
-
-  Widget _buildPopupMenuButton() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.3),
-            spreadRadius: 1,
-            blurRadius: 3,
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(3.0),
-        child: PopupMenuButton<String>(
-          icon: FaIcon(
-            FontAwesomeIcons.ellipsisV,
-            color: Colors.black54,
-            size: 15, // Adjusted size to match bell icon
-          ),
-          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-            const PopupMenuItem<String>(
-              value: 'alphabet',
-              child: Text('Tables occupées'),
-            ),
-            const PopupMenuItem<String>(
-              value: 'creationDate',
-              child: Text('Tables disponibles'),
-            ),
-          ],
-          onSelected: (String value) {},
-        ),
       ),
     );
   }

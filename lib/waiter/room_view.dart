@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get_storage/get_storage.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
 import 'package:pos/payement/views/calculator_widget.dart';
+import 'package:pos/payement/views/payement_dialog.dart';
 import 'package:pos/room/controllers/room_controller.dart';
-import 'package:pos/room/widgets/appbar_widget.dart';
-import 'package:pos/room/widgets/order_widget.dart';
+import 'package:pos/order/views/order_widget.dart';
+import 'package:pos/shared/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 import 'package:pos/table/models/table.dart' as pos_table;
 import 'package:pos/table/widgets/cicular_table.dart';
@@ -88,7 +88,7 @@ class _RoomViewState extends State<RoomView> {
       builder: (BuildContext context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
+            borderRadius: BorderRadius.circular(15.0),
           ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -114,37 +114,9 @@ class _RoomViewState extends State<RoomView> {
                 onTap: () {
                   Navigator.of(context).pop();
                   setState(() {
-                    showExpanded.value = true;
+                    _showPaymentDialog();
                   });
                 },
-              ),
-              ListTile(
-                contentPadding:
-                    EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                leading: Icon(
-                  selectedTable.value!.active ? Icons.lock : Icons.lock_open,
-                  color: Colors.redAccent,
-                  size: 28,
-                ),
-                title: Text(
-                  selectedTable.value!.active
-                      ? 'Table occupée'
-                      : 'Table disponible',
-                  style: TextStyle(fontSize: 16),
-                ),
-                trailing: Switch(
-                  value: !selectedTable.value!.active,
-                  onChanged: (bool value) {
-                    Navigator.of(context).pop();
-                    setState(() {
-                      selectedTable.value!.active = !value;
-                    });
-                    tableController.updateTable(
-                        selectedTable.value!.id.toString(), !value);
-                    roomController.getTablesByRoomId(
-                        roomController.roomList[selectedRoomIndex.value].id);
-                  },
-                ),
               ),
             ],
           ),
@@ -173,25 +145,25 @@ class _RoomViewState extends State<RoomView> {
       },
     ).then((_) {
       roomController.getTablesByRoomId(
-        roomController.roomList[selectedRoomIndex.value].id,
-      );
+          roomController.roomList[selectedRoomIndex.value].id);
     });
   }
 
   void _showPaymentDialog() {
-    double orderTotal = orderItems.fold(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return CalculatorWidget(
-          orderTotal: orderTotal,
-          orders: ordersForSelectedTable,
+        return PaymentDialog(
+          ordersForSelectedTable: ordersForSelectedTable,
+          roomController: roomController,
+          selectedRoomIndex: selectedRoomIndex.value,
+          tableId: selectedTable.value!.id,
         );
       },
-    );
+    ).then((_) {
+      roomController.getTablesByRoomId(
+          roomController.roomList[selectedRoomIndex.value].id);
+    });
   }
 
   @override
@@ -207,7 +179,7 @@ class _RoomViewState extends State<RoomView> {
                 flex: 5,
                 child: Column(
                   children: [
-                    AppBarWidget(),
+                    const AppBarWidget(),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: Row(
@@ -219,7 +191,8 @@ class _RoomViewState extends State<RoomView> {
                           Text('Disponible', style: TextStyle(fontSize: 15)),
                           SizedBox(width: 10),
                           Icon(Icons.circle,
-                              color: Color(0xFF00A86B), size: 15),
+                              color: AppTheme.lightTheme.primaryColor,
+                              size: 15),
                           SizedBox(width: 10),
                           Text('Occupé', style: TextStyle(fontSize: 15)),
                         ],
@@ -270,7 +243,7 @@ class _RoomViewState extends State<RoomView> {
                                     final table =
                                         roomController.tableList[index];
                                     Color borderColor = table.active
-                                        ? Color(0xFF65D265)
+                                        ? Color.fromARGB(255, 52, 183, 59)
                                         : Color(0xFF7F9699);
                                     return GestureDetector(
                                       onTap: () {
@@ -293,350 +266,6 @@ class _RoomViewState extends State<RoomView> {
                   ],
                 ),
               ),
-              if (selectedTable.value != null &&
-                  selectedTable.value!.active &&
-                  showExpanded.value)
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          spreadRadius: 4,
-                          blurRadius: 6,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(15.0),
-                      child: Column(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: AppTheme.lightTheme.primaryColor,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: EdgeInsets.all(6),
-                            child: Text(
-                              'Table N°${selectedTable.value!.position}',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Capacité:',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  Text(
-                                    '${selectedTable.value!.capacity}',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  Icon(Icons.person, size: 20),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'État:',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                selectedTable.value!.active
-                                    ? 'Occupé'
-                                    : 'Disponible',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: selectedTable.value!.active
-                                      ? AppTheme.lightTheme.primaryColor
-                                      : Colors.blue,
-                                ),
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 10),
-                          Divider(color: Colors.grey[300]),
-                          Expanded(
-                            child: ListView(
-                              children: [
-                                for (var order in ordersForSelectedTable)
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Dismissible(
-                                        key: Key(order.id.toString()),
-                                        direction: DismissDirection.endToStart,
-                                        background: Container(
-                                          color: Colors.redAccent,
-                                          child: Align(
-                                            alignment: Alignment.centerRight,
-                                            child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      horizontal: 20.0),
-                                              child: Icon(
-                                                Icons.delete,
-                                                color: Colors.white,
-                                                size: 30.0,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        onDismissed: (direction) {
-                                          orderController
-                                              .deleteOrder(order.id.toString());
-                                          setState(() {
-                                            ordersForSelectedTable
-                                                .remove(order);
-                                          });
-                                        },
-                                        child: Container(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Card(
-                                            color:
-                                                Colors.white.withOpacity(0.8),
-                                            elevation: 4,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(12.0),
-                                            ),
-                                            child: Padding(
-                                              padding: EdgeInsets.all(12.0),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    'Commande N°${order.id}',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  Text(
-                                                    'Date: ${order.createdAt.toLocal().toString().substring(0, 16)}',
-                                                    style:
-                                                        TextStyle(fontSize: 14),
-                                                  ),
-                                                  SizedBox(height: 10),
-                                                  Text(
-                                                    'Articles:',
-                                                    style: TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 5),
-                                                  for (var item in orderItems
-                                                      .where((item) =>
-                                                          item.orderId ==
-                                                          order.id))
-                                                    Container(
-                                                      margin:
-                                                          EdgeInsets.symmetric(
-                                                              vertical: 3.0),
-                                                      padding:
-                                                          EdgeInsets.all(8.0),
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white
-                                                            .withOpacity(0.6),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(8),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: Colors.grey
-                                                                .withOpacity(
-                                                                    0.3),
-                                                            spreadRadius: 2,
-                                                            blurRadius: 4,
-                                                            offset:
-                                                                Offset(0, 2),
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      child: Column(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          Row(
-                                                            mainAxisAlignment:
-                                                                MainAxisAlignment
-                                                                    .spaceBetween,
-                                                            children: [
-                                                              Text(
-                                                                '${item.quantity} x ${item.name}',
-                                                                style: TextStyle(
-                                                                    fontSize:
-                                                                        14),
-                                                              ),
-                                                              Text(
-                                                                '${item.price.toStringAsFixed(3)} TND',
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold,
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          if (item.note
-                                                              .isNotEmpty) ...[
-                                                            SizedBox(height: 5),
-                                                            Text(
-                                                              'Note: ${item.note}',
-                                                              style: TextStyle(
-                                                                fontSize: 12,
-                                                                fontStyle:
-                                                                    FontStyle
-                                                                        .italic,
-                                                                color: Colors
-                                                                    .grey[600],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                          if (item
-                                                              .selectedSupplements
-                                                              .isNotEmpty) ...[
-                                                            SizedBox(height: 5),
-                                                            Text(
-                                                              'Suppléments:',
-                                                              style: TextStyle(
-                                                                fontSize: 14,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
-                                                            for (var supplement
-                                                                in item
-                                                                    .selectedSupplements)
-                                                              Text(
-                                                                '${supplement['name']} - ${supplement['price']} TND',
-                                                                style:
-                                                                    TextStyle(
-                                                                  fontSize: 12,
-                                                                  color: Colors
-                                                                          .grey[
-                                                                      600],
-                                                                ),
-                                                              ),
-                                                          ],
-                                                        ],
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 10),
-                                    ],
-                                  ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              SizedBox(width: 10),
-                              Flexible(
-                                child: Center(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      double orderTotal = orderItems.fold(
-                                        0,
-                                        (sum, item) =>
-                                            sum + (item.price * item.quantity),
-                                      );
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return CalculatorWidget(
-                                            orderTotal: orderTotal,
-                                            orders: ordersForSelectedTable,
-                                          );
-                                        },
-                                      ).then((_) {
-                                        roomController.getTablesByRoomId(
-                                          roomController
-                                              .roomList[selectedRoomIndex.value]
-                                              .id,
-                                        );
-                                      });
-                                      setState(() {
-                                        showExpanded.value = false;
-                                      });
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red,
-                                      padding: EdgeInsets.symmetric(
-                                          horizontal: 20, vertical: 15),
-                                    ),
-                                    child: Text(
-                                      'Payer pour ${ordersForSelectedTable.fold(
-                                            0.0,
-                                            (sum, order) =>
-                                                sum +
-                                                orderItems
-                                                    .where((item) =>
-                                                        item.orderId ==
-                                                        order.id)
-                                                    .fold(
-                                                      0.0,
-                                                      (orderSum, item) =>
-                                                          orderSum +
-                                                          (item.price *
-                                                              item.quantity),
-                                                    ),
-                                          ).toStringAsFixed(2)} TND',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                )
             ],
           ),
         ),

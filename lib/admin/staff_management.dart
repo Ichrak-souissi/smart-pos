@@ -1,10 +1,12 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pos/app_theme.dart';
-import 'package:pos/authentication/models/user.dart';
-import 'package:pos/room/widgets/appbar_widget.dart';
 import 'package:pos/authentication/controllers/pin_controller.dart';
 import 'package:pos/authentication/controllers/user_controller.dart';
+import 'package:pos/authentication/models/user.dart';
+import 'package:pos/shared/widgets/appbar_widget.dart';
 
 class StaffManagement extends StatefulWidget {
   const StaffManagement({Key? key}) : super(key: key);
@@ -23,6 +25,8 @@ class _StaffManagementState extends State<StaffManagement>
   final Map<int, TextEditingController> roleControllers = {};
   final Map<int, TextEditingController> codeControllers = {};
   final Map<int, TextEditingController> phoneControllers = {};
+  final Map<int, TextEditingController> workHoursControllers = {};
+  final Map<int, TextEditingController> emailControllers = {};
   final Set<int> editingUsers = Set<int>();
 
   @override
@@ -123,7 +127,6 @@ class _StaffManagementState extends State<StaffManagement>
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddUserDialog,
         child: Icon(Icons.add),
-        //backgroundColor: AppTheme.lightTheme.primaryColor,
       ),
     );
   }
@@ -139,14 +142,14 @@ class _StaffManagementState extends State<StaffManagement>
           padding: const EdgeInsets.all(16.0),
           child: DataTable(
             headingRowColor: MaterialStateProperty.all(
-                AppTheme.lightTheme.primaryColor.withOpacity(0.1)),
+                AppTheme.lightTheme.primaryColor.withOpacity(0.2)),
             dataRowColor: MaterialStateProperty.all(Colors.white),
             columns: [
               DataColumn(
                   label: Text('ID',
                       style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(
-                  label: Text('Nom',
+                  label: Text('Utilisateur',
                       style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(
                   label: Text('Rôle',
@@ -156,6 +159,12 @@ class _StaffManagementState extends State<StaffManagement>
                       style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(
                   label: Text('Téléphone',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Horaire de Travail',
+                      style: TextStyle(fontWeight: FontWeight.bold))),
+              DataColumn(
+                  label: Text('Email',
                       style: TextStyle(fontWeight: FontWeight.bold))),
               DataColumn(
                   label: Text('Actions',
@@ -170,6 +179,10 @@ class _StaffManagementState extends State<StaffManagement>
                   TextEditingController(text: user.code);
               phoneControllers[user.id] ??=
                   TextEditingController(text: user.phone.toString());
+              workHoursControllers[user.id] ??=
+                  TextEditingController(text: user.workHours ?? '');
+              emailControllers[user.id] ??=
+                  TextEditingController(text: user.email);
 
               return DataRow(cells: [
                 DataCell(Text(user.id.toString())),
@@ -179,7 +192,7 @@ class _StaffManagementState extends State<StaffManagement>
                           controller: nameControllers[user.id],
                           decoration: InputDecoration(border: InputBorder.none),
                         )
-                      : Text(user.name),
+                      : Text('${user.name}'),
                 ),
                 DataCell(
                   editingUsers.contains(user.id)
@@ -207,6 +220,22 @@ class _StaffManagementState extends State<StaffManagement>
                       : Text(user.phone.toString()),
                 ),
                 DataCell(
+                  editingUsers.contains(user.id)
+                      ? TextFormField(
+                          controller: workHoursControllers[user.id],
+                          decoration: InputDecoration(border: InputBorder.none),
+                        )
+                      : Text(user.workHours ?? 'Non défini'),
+                ),
+                DataCell(
+                  editingUsers.contains(user.id)
+                      ? TextFormField(
+                          controller: emailControllers[user.id],
+                          decoration: InputDecoration(border: InputBorder.none),
+                        )
+                      : Text(user.email),
+                ),
+                DataCell(
                   Row(
                     children: [
                       if (editingUsers.contains(user.id))
@@ -216,11 +245,16 @@ class _StaffManagementState extends State<StaffManagement>
                             final updatedUser = User(
                               id: user.id,
                               name: nameControllers[user.id]?.text ?? user.name,
+                              email:
+                                  emailControllers[user.id]?.text ?? user.email,
+                              image: user.image,
                               role: roleControllers[user.id]?.text ?? user.role,
                               code: codeControllers[user.id]?.text ?? user.code,
                               phone: int.tryParse(
                                       phoneControllers[user.id]?.text ?? '') ??
                                   user.phone,
+                              workHours: workHoursControllers[user.id]?.text ??
+                                  user.workHours,
                             );
                             await userController.updateUser(updatedUser);
 
@@ -276,7 +310,7 @@ class _StaffManagementState extends State<StaffManagement>
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Confirmer la suppression'),
-          content: Text('Êtes-vous sûr de vouloir supprimer cet utilisateur ?'),
+          content: Text('Voulez-vous vraiment supprimer cet utilisateur ?'),
           actions: <Widget>[
             TextButton(
               child: Text('Annuler'),
@@ -288,10 +322,10 @@ class _StaffManagementState extends State<StaffManagement>
               child: Text('Supprimer'),
               onPressed: () async {
                 await userController.deleteUser(user.id);
-                Navigator.of(context).pop();
                 setState(() {
                   filteredUsers.removeWhere((u) => u.id == user.id);
                 });
+                Navigator.of(context).pop();
               },
             ),
           ],
@@ -300,104 +334,116 @@ class _StaffManagementState extends State<StaffManagement>
     );
   }
 
+  File? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _pickedImage = File(pickedFile.path);
+      });
+    }
+  }
+
   void _showAddUserDialog() {
-    GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+    String name = '';
+    String role = '';
+    String code = '';
+    int phone = 0;
+    String workHours = '';
+    String email = '';
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        final TextEditingController nameController = TextEditingController();
-        final TextEditingController codeController = TextEditingController();
-        final TextEditingController phoneController = TextEditingController();
-        String selectedRole = 'waiter';
-
         return AlertDialog(
           title: Text('Ajouter un utilisateur'),
-          content: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: ListBody(
-                children: <Widget>[
-                  TextFormField(
-                    controller: nameController,
-                    decoration: InputDecoration(labelText: 'Nom'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Entrer le nom de l\'utilisateur';
-                      }
-                      return null;
-                    },
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                GestureDetector(
+                  onTap: _pickImage,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundImage: _pickedImage != null
+                        ? FileImage(_pickedImage!)
+                        : AssetImage('assets/images/user.png') as ImageProvider,
+                    child: Icon(
+                      Icons.add_a_photo,
+                      size: 50,
+                      color: Colors.white.withOpacity(0.7),
+                    ),
                   ),
-                  DropdownButtonFormField<String>(
-                    value: selectedRole,
-                    onChanged: (String? newValue) {
-                      setState(() {
-                        selectedRole = newValue!;
-                      });
-                    },
-                    items: <String>['waiter', 'admin', 'chief']
-                        .map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
-                    decoration: InputDecoration(labelText: 'Rôle'),
-                  ),
-                  TextFormField(
-                    controller: codeController,
-                    decoration: InputDecoration(labelText: 'Code'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Entrer le code PIN';
-                      } else if (userController.doesPinExist(value)) {
-                        return 'Le code PIN existe déjà';
-                      }
-                      return null;
-                    },
-                  ),
-                  TextFormField(
-                    controller: phoneController,
-                    decoration: InputDecoration(labelText: 'Téléphone'),
-                    keyboardType: TextInputType.phone,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Entrer le numéro de téléphone';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
-              ),
+                ),
+                SizedBox(height: 10),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Nom'),
+                  onChanged: (value) {
+                    name = value;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Rôle'),
+                  onChanged: (value) {
+                    role = value;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Code'),
+                  onChanged: (value) {
+                    code = value;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Téléphone'),
+                  keyboardType: TextInputType.phone,
+                  onChanged: (value) {
+                    phone = int.tryParse(value) ?? 0;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Horaire de Travail'),
+                  onChanged: (value) {
+                    workHours = value;
+                  },
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Email'),
+                  onChanged: (value) {
+                    email = value;
+                  },
+                ),
+              ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: Text(
-                'Annuler',
-                style: TextStyle(color: Colors.redAccent),
-              ),
+              child: Text('Annuler'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text(
-                'Ajouter',
-                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
-              ),
+              child: Text('Ajouter'),
               onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  final newUser = User(
-                    id: DateTime.now().millisecondsSinceEpoch,
-                    name: nameController.text,
-                    role: selectedRole,
-                    code: codeController.text,
-                    phone: int.tryParse(phoneController.text) ?? 0,
-                  );
-                  await userController.addUser(newUser);
-                  Navigator.of(context).pop();
-                }
+                final newUser = User(
+                  id: DateTime.now().millisecondsSinceEpoch,
+                  name: name,
+                  role: role,
+                  code: code,
+                  phone: phone,
+                  workHours: workHours,
+                  email: email,
+                  image: _pickedImage != null
+                      ? _pickedImage!.path
+                      : 'assets/images/user.png',
+                );
+                await userController.addUser(newUser);
+                Navigator.of(context).pop();
+                setState(() {
+                  filteredUsers.add(newUser);
+                });
               },
             ),
           ],

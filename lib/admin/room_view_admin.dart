@@ -6,9 +6,8 @@ import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/models/room.dart';
-import 'package:pos/room/widgets/appbar_widget.dart';
-// ignore: library_prefixes
-import 'package:pos/table/models/table.dart' as Table;
+import 'package:pos/shared/widgets/appbar_widget.dart';
+import 'package:pos/table/models/table.dart' as TableModel;
 import 'package:pos/table/views/table_detail_dialog.dart';
 import 'package:pos/table/widgets/cicular_table.dart';
 
@@ -24,9 +23,8 @@ class _RoomViewState extends State<RoomViewAdmin> {
   final OrderController orderController = Get.put(OrderController());
 
   int selectedRoomIndex = 0;
-  var selectedTable;
+  TableModel.Table? selectedTable;
   RxList<Order> ordersForSelectedTable = RxList<Order>();
-  RxList<OrderItem> orderItems = RxList<OrderItem>();
 
   TextEditingController roomNameController = TextEditingController();
   TextEditingController numberOfTablesController = TextEditingController();
@@ -46,18 +44,12 @@ class _RoomViewState extends State<RoomViewAdmin> {
       setState(() {
         selectedRoomIndex = 0;
       });
-    } else {
-      setState(() {
-        selectedRoomIndex = -1;
-      });
     }
   }
 
   Future<void> _onRoomChanged(int index) async {
-    if (index >= 0 && index < roomController.roomList.length) {
-      await roomController.getTablesByRoomId(roomController.roomList[index].id);
-      setState(() {});
-    }
+    await roomController.getTablesByRoomId(roomController.roomList[index].id);
+    setState(() {});
   }
 
   Future<void> _loadRoomTables(int roomId) async {
@@ -67,7 +59,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
   Future<void> _loadOrdersAndItemsByTableId(int tableId) async {
     try {
       ordersForSelectedTable.assignAll(orderController.orders
-          .where((order) => order.tableId == tableId && order.isPaid == true)
+          .where((order) => order.tableId == tableId && order.isPaid)
           .toList());
     } catch (e) {
       print('Error loading orders and items: $e');
@@ -92,7 +84,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<int>(
-                      value: selectedRoomIndex >= 0
+                      value: roomController.roomList.isNotEmpty
                           ? roomController.roomList[selectedRoomIndex].id
                           : null,
                       onChanged: (int? newValue) {
@@ -167,76 +159,56 @@ class _RoomViewState extends State<RoomViewAdmin> {
                     if (_formKey.currentState!.validate()) {
                       int newPosition =
                           int.tryParse(tablePositionController.text) ?? 0;
+                      int roomId =
+                          roomController.roomList[selectedRoomIndex].id;
+
+                      await _loadRoomTables(roomId);
 
                       bool positionExists = roomController.tableList.any(
                           (table) =>
                               table.position == newPosition &&
-                              table.roomId ==
-                                  roomController
-                                      .roomList[selectedRoomIndex].id);
+                              table.roomId == roomId);
 
                       int tableCountInRoom = roomController
                           .roomList[selectedRoomIndex].tables.length;
-
                       int maxTablesInRoom = roomController
                           .roomList[selectedRoomIndex].numberOfTables;
 
                       if (positionExists) {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Erreur'),
-                              content: const Text(
-                                  'Une table existe déjà à cette position.'),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
+                        Get.snackbar(
+                          'Erreur',
+                          'Une table existe déjà à cette position.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 3),
                         );
                       } else if (tableCountInRoom < maxTablesInRoom) {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: const Text('Erreur'),
-                              content: Text(
-                                'Le nombre de tables dans la salle ${roomController.roomList[selectedRoomIndex].name} a atteint la limite maximale.',
-                              ),
-                              actions: <Widget>[
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                ),
-                              ],
-                            );
-                          },
+                        Get.snackbar(
+                          'Erreur',
+                          'Le nombre de tables dans la salle ${roomController.roomList[selectedRoomIndex].name} a atteint la limite maximale.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 3),
                         );
                       } else {
-                        var table = Table.Table(
+                        var table = TableModel.Table(
                           capacity:
                               int.tryParse(tableCapacityController.text) ?? 0,
                           active: false,
                           position: newPosition,
-                          roomId: roomController.roomList[selectedRoomIndex].id,
+                          roomId: roomId,
                           orders: [],
-                          id: 0,
+                          id: roomController.tableList.isNotEmpty
+                              ? roomController.tableList
+                                      .map((t) => t.id)
+                                      .reduce((a, b) => a > b ? a : b) +
+                                  1
+                              : 1,
                         );
-                        roomController.tableList.add(table);
+
                         roomController.addTable(table);
-                        setState(() {
-                          roomController.roomList[selectedRoomIndex].tables
-                              .add(table);
-                        });
-                        tableCountInRoom++;
+                        roomController.tableList.add(table);
+                        roomController.roomList[selectedRoomIndex].tables
+                            .add(table);
+
                         Navigator.of(context).pop();
                       }
                     }
@@ -245,6 +217,48 @@ class _RoomViewState extends State<RoomViewAdmin> {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void _showDeleteTableDialog(TableModel.Table table) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Supprimer la table'),
+          content: Text(
+              'Êtes-vous sûr de vouloir supprimer la table ${table.position}?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Annuler'),
+            ),
+            TextButton(
+              onPressed: () async {
+                try {
+                  await roomController.deleteTable(table.id);
+                  roomController.tableList.remove(table);
+                  roomController.roomList[selectedRoomIndex].tables
+                      .remove(table);
+
+                  Get.snackbar(
+                    'Succès',
+                    'La table ${table.position} a été supprimée avec succès.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    duration: const Duration(seconds: 3),
+                  );
+                } catch (e) {
+                  print('Erreur lors de la suppression de la table: $e');
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Supprimer'),
+            ),
+          ],
         );
       },
     );
@@ -310,7 +324,12 @@ class _RoomViewState extends State<RoomViewAdmin> {
               onPressed: () async {
                 if (_formKey.currentState!.validate()) {
                   var room = Room(
-                    id: roomController.roomList.length + 1,
+                    id: roomController.roomList.isNotEmpty
+                        ? roomController.roomList
+                                .map((r) => r.id)
+                                .reduce((a, b) => a > b ? a : b) +
+                            1
+                        : 1,
                     name: roomNameController.text,
                     numberOfTables:
                         int.tryParse(numberOfTablesController.text) ?? 0,
@@ -318,11 +337,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
                   );
 
                   roomController.addRoom(room);
-                  roomController.roomList.add(room);
                   setState(() {
-                    roomController.getRoomList();
+                    roomController.roomList.add(room);
                   });
-
                   Navigator.of(context).pop();
                 }
               },
@@ -339,8 +356,8 @@ class _RoomViewState extends State<RoomViewAdmin> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Supprimer la salle'),
-          content:
-              Text('Êtes-vous sûr de vouloir supprimer la salle ${room.name}?'),
+          content: Text(
+              'Êtes-vous sûr de vouloir supprimer la salle ${room.name} ?'),
           actions: <Widget>[
             TextButton(
               onPressed: () {
@@ -352,15 +369,9 @@ class _RoomViewState extends State<RoomViewAdmin> {
               onPressed: () async {
                 await roomController.deleteRoom(room);
                 setState(() {
-                  if (selectedRoomIndex >= roomController.roomList.length) {
-                    selectedRoomIndex = roomController.roomList.length - 1;
-                  }
-                  if (selectedRoomIndex >= 0) {
-                    _onRoomChanged(selectedRoomIndex);
-                  }
+                  roomController.roomList.remove(room);
                 });
-
-                Navigator.of(context).pop();
+                _loadRoomTables(room.id);
 
                 Get.snackbar(
                   'Succès',
@@ -368,6 +379,8 @@ class _RoomViewState extends State<RoomViewAdmin> {
                   snackPosition: SnackPosition.BOTTOM,
                   duration: const Duration(seconds: 3),
                 );
+
+                Navigator.of(context).pop();
               },
               child: const Text('Supprimer'),
             ),
@@ -502,12 +515,6 @@ class _RoomViewState extends State<RoomViewAdmin> {
                       ],
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(6.0),
-                    child: Row(
-                      children: [],
-                    ),
-                  ),
                   Expanded(
                     child: Obx(() {
                       if (roomController.isLoading.value) {
@@ -516,7 +523,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                         );
                       } else {
                         return Padding(
-                          padding: const EdgeInsets.all(1.0),
+                          padding: const EdgeInsets.all(15.0),
                           child: GridView.builder(
                             gridDelegate:
                                 const SliverGridDelegateWithFixedCrossAxisCount(
@@ -525,40 +532,43 @@ class _RoomViewState extends State<RoomViewAdmin> {
                               crossAxisSpacing: 2.0,
                               childAspectRatio: 1.5,
                             ),
-                            itemCount: selectedRoomIndex >= 0
-                                ? roomController
-                                    .roomList[selectedRoomIndex].tables.length
-                                : 0,
+                            itemCount: roomController.tableList.length,
                             itemBuilder: (context, index) {
-                              final table = roomController
-                                  .roomList[selectedRoomIndex].tables[index];
-                              Color borderColor;
-                              if (table.active) {
-                                borderColor =
-                                    const Color.fromARGB(255, 101, 210, 105);
-                              } else {
-                                borderColor =
-                                    const Color.fromARGB(255, 127, 150, 161);
-                              }
-                              return GestureDetector(
-                                onTap: () {
-                                  {
-                                    setState(() {
-                                      selectedTable = table;
-                                      TableDetailsDialog(
-                                        context,
-                                        ordersForSelectedTable,
-                                        table: selectedTable,
-                                      ).show(selectedTable);
-                                      _loadOrdersAndItemsByTableId(
-                                          selectedTable.id);
-                                    });
-                                  }
+                              final table = roomController.tableList[index];
+                              Color borderColor = table.active
+                                  ? AppTheme.lightTheme.primaryColor
+                                  : const Color.fromARGB(255, 127, 150, 161);
+                              return Dismissible(
+                                key: Key(table.id.toString()),
+                                direction: DismissDirection.endToStart,
+                                onDismissed: (direction) async {
+                                  _showDeleteTableDialog(table);
                                 },
-                                child: CircularTable(
-                                  capacity: table.capacity,
-                                  tableName: ' ${table.position}',
-                                  borderColor: borderColor,
+                                background: Container(
+                                  color: Colors.red,
+                                  child: const Align(
+                                    alignment: Alignment.centerRight,
+                                    child: Padding(
+                                      padding: EdgeInsets.all(16.0),
+                                      child: Icon(Icons.delete,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    selectedTable = table;
+                                    _loadOrdersAndItemsByTableId(table.id);
+                                    TableDetailsDialog(
+                                            context, ordersForSelectedTable,
+                                            table: table)
+                                        .show(selectedTable);
+                                  },
+                                  child: CircularTable(
+                                    capacity: table.capacity,
+                                    tableName: ' ${table.id}',
+                                    borderColor: borderColor,
+                                  ),
                                 ),
                               );
                             },

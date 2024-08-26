@@ -5,7 +5,7 @@ class Order {
   late final int tableId;
   late final double total;
   late final List<OrderItem> orderItems;
-  late final int status;
+  late int status;
   late final DateTime createdAt;
   late final bool isPaid;
 

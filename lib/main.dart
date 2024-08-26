@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
       getPages: AppPages.pages,
       home: Obx(() {
         if (authController.isLoggedIn.value == true) {
-          return const Home();
+          return Home();
         } else {
           return const PinScreen();
         }

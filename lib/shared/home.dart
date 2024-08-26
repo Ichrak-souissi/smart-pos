@@ -6,11 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:pos/admin/staff_management.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/views/pin_screen.dart';
+import 'package:pos/item/views/item_status_managment.dart';
 import 'package:pos/shared/dashboard.dart';
+import 'package:pos/shared/icon_buttom.dart';
+import 'package:pos/waiter/order_view.dart';
+import 'package:pos/waiter/order_view_waiter.dart';
 import 'package:pos/waiter/room_view.dart';
 import 'package:pos/admin/room_view_admin.dart';
 import 'package:pos/app/routes/app_routes.dart';
-import 'package:pos/shared/icon_buttom.dart';
 import 'package:pos/admin/item_management.dart';
 
 class Home extends StatefulWidget {
@@ -37,7 +40,11 @@ class _HomeState extends State<Home> {
 
     final userRole = storage.read('userRole') ?? '';
     setState(() {
-      selectedPage = (userRole != 'admin') ? 1 : 0;
+      selectedPage = (userRole == 'admin')
+          ? 0
+          : (userRole == 'waiter')
+              ? 1
+              : 2;
     });
   }
 
@@ -62,62 +69,61 @@ class _HomeState extends State<Home> {
 
     switch (pageIndex) {
       case 0:
-        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-          pageBuilder: (context, animation1, animation2) => DashboardPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ));
+        _navigatorKey.currentState
+            ?.pushReplacement(_pageRouteBuilder(DashboardPage()));
         break;
       case 1:
-        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-          pageBuilder: (context, animation1, animation2) =>
-              (storage.read('userRole') == 'admin')
-                  ? const RoomViewAdmin()
-                  : const RoomView(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ));
+        _navigatorKey.currentState
+            ?.pushReplacement(_pageRouteBuilder(_roomView()));
         break;
       case 2:
-        if (storage.read('userRole') == 'admin') {
-          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => ItemManagement(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ));
-        } else {
-          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => DashboardPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ));
-        }
+        _navigatorKey.currentState
+            ?.pushReplacement(_pageRouteBuilder(_itemManagementOrOrderView()));
         break;
-
       case 3:
-        if (storage.read('userRole') == 'admin') {
-          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) =>
-                const StaffManagement(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ));
-        } else {
-          _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-            pageBuilder: (context, animation1, animation2) => DashboardPage(),
-            transitionDuration: Duration.zero,
-            reverseTransitionDuration: Duration.zero,
-          ));
-        }
+        _navigatorKey.currentState
+            ?.pushReplacement(_pageRouteBuilder(_staffManagementOrDashboard()));
         break;
       default:
-        _navigatorKey.currentState?.pushReplacement(PageRouteBuilder(
-          pageBuilder: (context, animation1, animation2) => DashboardPage(),
-          transitionDuration: Duration.zero,
-          reverseTransitionDuration: Duration.zero,
-        ));
+        _navigatorKey.currentState
+            ?.pushReplacement(_pageRouteBuilder(DashboardPage()));
         break;
     }
+  }
+
+  PageRouteBuilder _pageRouteBuilder(Widget page) {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation1, animation2) => page,
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+    );
+  }
+
+  Widget _roomView() {
+    final userRole = storage.read('userRole') ?? '';
+    if (userRole == 'admin') {
+      return const RoomViewAdmin();
+    } else if (userRole == 'chief') {
+      return const OrdersView();
+    } else {
+      return const RoomView();
+    }
+  }
+
+  Widget _itemManagementOrOrderView() {
+    final userRole = storage.read('userRole') ?? '';
+    if (userRole == 'admin') {
+      return ItemManagement();
+    } else if (userRole == 'chief') {
+      return ItemStatusManagement();
+    } else {
+      return OrdersViewWaiter();
+    }
+  }
+
+  Widget _staffManagementOrDashboard() {
+    final userRole = storage.read('userRole') ?? '';
+    return (userRole == 'admin') ? const StaffManagement() : DashboardPage();
   }
 
   void logout() {
@@ -140,75 +146,87 @@ class _HomeState extends State<Home> {
       List<Widget> buttons = [];
 
       if (userRole == 'admin') {
-        buttons.add(CustomIconButton(
-          onTap: () {
-            navigateToPage(0);
-          },
-          icon: Icons.dashboard_outlined,
-          selectedIcon: selectedPage,
-          index: 0,
-        ));
-        buttons.add(const SizedBox(height: 15));
-      }
-
-      buttons.add(CustomIconButton(
-        onTap: () {
-          navigateToPage(1);
-        },
-        icon: Icons.table_bar,
-        selectedIcon: selectedPage,
-        index: 1,
-      ));
-      buttons.add(const SizedBox(height: 15));
-
-      if (userRole == 'admin') {
-        buttons.add(CustomIconButton(
-          onTap: () {
-            navigateToPage(2);
-          },
-          icon: Icons.list_alt,
-          selectedIcon: selectedPage,
-          index: 2,
-        ));
-        buttons.add(const SizedBox(height: 15));
-
-        buttons.add(CustomIconButton(
-          onTap: () {
-            navigateToPage(3);
-          },
-          icon: Icons.supervisor_account_outlined,
-          selectedIcon: selectedPage,
-          index: 3,
-        ));
-        buttons.add(const SizedBox(height: 15));
+        buttons.addAll([
+          CustomIconButton(
+              onTap: () => navigateToPage(0),
+              icon: Icons.dashboard_outlined,
+              selectedIcon: selectedPage,
+              index: 0),
+          const SizedBox(height: 15),
+          CustomIconButton(
+              onTap: () => navigateToPage(1),
+              icon: Icons.table_bar,
+              selectedIcon: selectedPage,
+              index: 1),
+          const SizedBox(height: 15),
+          CustomIconButton(
+              onTap: () => navigateToPage(2),
+              icon: Icons.list_alt,
+              selectedIcon: selectedPage,
+              index: 2),
+          const SizedBox(height: 15),
+          CustomIconButton(
+              onTap: () => navigateToPage(3),
+              icon: Icons.supervisor_account_outlined,
+              selectedIcon: selectedPage,
+              index: 3),
+          const SizedBox(height: 15),
+        ]);
+      } else if (userRole == 'waiter') {
+        buttons.addAll([
+          CustomIconButton(
+              onTap: () => navigateToPage(1),
+              icon: Icons.table_bar,
+              selectedIcon: selectedPage,
+              index: 1),
+          const SizedBox(height: 15),
+          CustomIconButton(
+              onTap: () => navigateToPage(2),
+              icon: Icons.list_alt,
+              selectedIcon: selectedPage,
+              index: 2),
+          const SizedBox(height: 15),
+        ]);
+      } else if (userRole == 'chief') {
+        buttons.addAll([
+          CustomIconButton(
+              onTap: () => navigateToPage(1),
+              icon: Icons.table_bar,
+              selectedIcon: selectedPage,
+              index: 1),
+          const SizedBox(height: 15),
+          CustomIconButton(
+              onTap: () => navigateToPage(2),
+              icon: Icons.list_alt,
+              selectedIcon: selectedPage,
+              index: 2),
+          const SizedBox(height: 15),
+        ]);
       }
 
       buttons.add(const Spacer());
-
       buttons.add(CustomIconButton(
-        onTap: () {
-          logout();
-        },
-        icon: Icons.logout_outlined,
-        selectedIcon: selectedPage,
-        index: 4,
-      ));
+          onTap: logout,
+          icon: Icons.logout_outlined,
+          selectedIcon: selectedPage,
+          index: 4));
       buttons.add(const SizedBox(height: 10));
 
       return buttons;
     }
 
-    String initialRoute =
-        userRole == 'admin' ? Routes.Dashboard : Routes.RoomManagement;
+    String initialRoute = userRole == 'admin'
+        ? Routes.Dashboard
+        : (userRole == 'waiter')
+            ? Routes.RoomManagement
+            : Routes.OrdersManagement;
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 250, 255, 245),
       body: Row(
         key: const ValueKey('home'),
         children: [
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 10),
           Expanded(
             flex: 1,
             child: Padding(
@@ -240,28 +258,19 @@ class _HomeState extends State<Home> {
                     builder = (BuildContext _) => DashboardPage();
                     break;
                   case Routes.RoomManagement:
-                    builder = (BuildContext _) =>
-                        (storage.read('userRole') == 'admin')
-                            ? const RoomViewAdmin()
-                            : const RoomView();
+                    builder = (BuildContext _) => _roomView();
                     break;
                   case Routes.ItemManagement:
                     builder = (BuildContext _) => ItemManagement();
                     break;
                   case Routes.StaffManagement:
-                    builder = (BuildContext _) => const StaffManagement();
+                    builder = (BuildContext _) => _staffManagementOrDashboard();
+                    break;
+                  case Routes.OrdersManagement:
+                    builder = (BuildContext _) => _itemManagementOrOrderView();
                     break;
                   default:
                     builder = (BuildContext _) => DashboardPage();
-                }
-
-                if (userRole != 'admin' && settings.name == Routes.Dashboard) {
-                  return PageRouteBuilder(
-                    pageBuilder: (context, animation1, animation2) =>
-                        const RoomView(),
-                    transitionDuration: Duration.zero,
-                    reverseTransitionDuration: Duration.zero,
-                  );
                 }
 
                 return PageRouteBuilder(

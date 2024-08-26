@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/order/models/order.dart';
+import 'package:pos/table/models/table.dart' as foodtable;
 import 'package:table_calendar/table_calendar.dart';
 
 class TableDetailsDialog {
@@ -10,7 +11,7 @@ class TableDetailsDialog {
   final List<Order> ordersForSelectedTable;
 
   TableDetailsDialog(this.context, this.ordersForSelectedTable,
-      {required Table table});
+      {required foodtable.Table table});
 
   void show(table) {
     showDialog(

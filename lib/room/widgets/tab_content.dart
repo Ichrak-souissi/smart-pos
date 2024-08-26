@@ -10,10 +10,10 @@ import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class TabContent extends StatefulWidget {
-  final Map<Item, int> orderMap;
+  final RxMap<Item, int> orderMap;
   final double Function(Map<Item, int>) calculateTotal;
   final String? selectedTableId;
-  Map<Item, String> itemNotes = {};
+  final RxMap<Item, String> itemNotes = RxMap<Item, String>();
 
   TabContent({
     super.key,
@@ -27,10 +27,10 @@ class TabContent extends StatefulWidget {
 }
 
 class _TabContentState extends State<TabContent> {
-  final CounterController counterController = Get.put(CounterController());
   late final TableController tableController;
   late final OrderController orderController;
   final RoomController roomController = Get.put(RoomController());
+  final CounterController counterController = Get.put(CounterController());
 
   @override
   void initState() {
@@ -45,6 +45,13 @@ class _TabContentState extends State<TabContent> {
       final quantity = entry.value;
       final note = widget.itemNotes[item] ?? '';
       final supplements = item.supplements ?? [];
+
+      double itemTotalPrice = item.price * quantity;
+      double supplementsTotalPrice = supplements.fold(
+        0.0,
+        (sum, supplement) => sum + (supplement.price * quantity),
+      );
+
       return OrderItem(
         categoryId: item.categoryId,
         imageUrl: item.imageUrl,
@@ -52,7 +59,7 @@ class _TabContentState extends State<TabContent> {
         id: item.id,
         name: item.name,
         quantity: quantity,
-        price: item.price * quantity,
+        price: itemTotalPrice,
         note: note,
         selectedSupplements: supplements
             .map((supplement) => {
@@ -64,8 +71,7 @@ class _TabContentState extends State<TabContent> {
     }).toList();
   }
 
-  void _handleSupplementRemove(
-      BuildContext context, Item item, Supplement supplement) {
+  void _handleSupplementRemove(Item item, Supplement supplement) {
     setState(() {
       item.supplements?.remove(supplement);
       item.price -= supplement.price;
@@ -77,6 +83,10 @@ class _TabContentState extends State<TabContent> {
       _showOrderAlert(context);
     } else {
       if (widget.selectedTableId != null) {
+        final subTotal = widget.calculateTotal(widget.orderMap);
+        final tax = subTotal * 0.05;
+        final total = subTotal + tax;
+
         await tableController.updateTable(widget.selectedTableId!, true);
 
         List<OrderItem> orderItems = getOrderItemsFromMap(
@@ -84,7 +94,7 @@ class _TabContentState extends State<TabContent> {
 
         Order order = Order(
           tableId: int.parse(widget.selectedTableId!),
-          total: widget.calculateTotal(widget.orderMap),
+          total: total,
           isPaid: false,
           orderItems: orderItems,
           status: 1,
@@ -93,12 +103,13 @@ class _TabContentState extends State<TabContent> {
         );
 
         await orderController.addOrder(order);
+
         setState(() {
           widget.orderMap.clear();
         });
+
+        Navigator.pop(context);
       }
-      // ignore: use_build_context_synchronously
-      Navigator.pop(context);
     }
   }
 
@@ -125,7 +136,11 @@ class _TabContentState extends State<TabContent> {
 
   void _updateItemQuantity(Item item, int newQuantity) {
     setState(() {
-      widget.orderMap[item] = newQuantity;
+      if (newQuantity <= 0) {
+        widget.orderMap.remove(item);
+      } else {
+        widget.orderMap[item] = newQuantity;
+      }
     });
   }
 
@@ -138,6 +153,8 @@ class _TabContentState extends State<TabContent> {
   @override
   Widget build(BuildContext context) {
     final subTotal = widget.calculateTotal(widget.orderMap);
+    final tax = subTotal * 0.05;
+    final total = subTotal + tax;
 
     return Expanded(
       child: Obx(() {
@@ -151,13 +168,13 @@ class _TabContentState extends State<TabContent> {
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: Container(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(8.0),
                   decoration: BoxDecoration(
                     color: AppTheme.lightTheme.primaryColor,
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      const BoxShadow(
-                        color: Colors.black26,
+                      BoxShadow(
+                        color: Colors.black12,
                         blurRadius: 8.0,
                         offset: Offset(0, 4),
                       ),
@@ -181,7 +198,7 @@ class _TabContentState extends State<TabContent> {
               Divider(color: Colors.grey.shade200),
               Flexible(
                 child: widget.orderMap.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Text(
                           'Aucun produit sélectionné.',
                           style: TextStyle(color: Colors.grey, fontSize: 16),
@@ -192,12 +209,20 @@ class _TabContentState extends State<TabContent> {
                         itemBuilder: (context, index) {
                           final item = widget.orderMap.keys.elementAt(index);
                           final quantity = widget.orderMap[item]!;
-                          final totalPrice = item.price * quantity;
+                          final supplementsTotalPrice = item.supplements?.fold(
+                                0.0,
+                                (sum, supplement) => sum + supplement.price,
+                              ) ??
+                              0.0;
+
+                          final totalPrice =
+                              (item.price + supplementsTotalPrice) * quantity;
+
                           final note = widget.itemNotes[item] ?? '';
                           final supplements = item.supplements ?? [];
 
                           return Dismissible(
-                            key: Key(item.id.toString()),
+                            key: ValueKey(item.id),
                             onDismissed: (direction) {
                               setState(() {
                                 widget.orderMap.remove(item);
@@ -212,138 +237,188 @@ class _TabContentState extends State<TabContent> {
                                   child: Icon(
                                     Icons.delete,
                                     color: Colors.white,
+                                    size: 28,
                                   ),
                                 ),
                               ),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 12.0),
                               child: Card(
                                 color: Colors.white,
-                                elevation: 4,
+                                elevation: 0,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    ListTile(
-                                      // Commenté pour ne pas afficher l'image
-                                      // leading: item.imageUrl != null
-                                      //   ? CircleAvatar(
-                                      //       radius: 30,
-                                      //       backgroundImage: NetworkImage(item.imageUrl),
-                                      //     )
-                                      //   : const CircleAvatar(
-                                      //       radius: 30,
-                                      //       child: Icon(Icons.image, size: 30),
-                                      //     ),
-                                      leading: const CircleAvatar(
-                                        radius: 30,
-                                        child: Icon(Icons.image, size: 30),
-                                      ),
-                                      title: Text(
-                                        item.name,
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      ListTile(
+                                        leading: item.imageUrl != null
+                                            ? CircleAvatar(
+                                                radius: 30,
+                                                backgroundImage:
+                                                    NetworkImage(item.imageUrl),
+                                              )
+                                            : const CircleAvatar(
+                                                radius: 30,
+                                                child:
+                                                    Icon(Icons.image, size: 30),
+                                              ),
+                                        title: Text(
+                                          item.name,
+                                          style: const TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                      ),
-                                      subtitle: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Row(
-                                                children: [
-                                                  IconButton(
-                                                    icon: const Icon(
-                                                        Icons.remove),
-                                                    onPressed: () {
-                                                      if (quantity > 1) {
+                                        subtitle: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            const SizedBox(height: 8),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Prix : ${(item.price * quantity).toStringAsFixed(2)} dt',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.grey,
+                                                  ),
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    IconButton(
+                                                      onPressed: () {
                                                         _updateItemQuantity(
                                                             item, quantity - 1);
-                                                      }
-                                                    },
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.remove_circle,
+                                                        color: Colors.red,
+                                                      ),
+                                                    ),
+                                                    Text(
+                                                      '$quantity',
+                                                      style: const TextStyle(
+                                                        fontSize: 16,
+                                                      ),
+                                                    ),
+                                                    IconButton(
+                                                      onPressed: () {
+                                                        _updateItemQuantity(
+                                                            item, quantity + 1);
+                                                      },
+                                                      icon: const Icon(
+                                                        Icons.add_circle,
+                                                        color: Colors.green,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  'Note:',
+                                                  style: TextStyle(
+                                                    color: Colors.grey.shade700,
+                                                    fontSize: 16,
                                                   ),
-                                                  Text(
-                                                    '$quantity',
+                                                ),
+                                                SizedBox(
+                                                  width: 5,
+                                                ),
+                                                Flexible(
+                                                  child: TextField(
+                                                    onChanged: (newNote) =>
+                                                        _updateItemNote(
+                                                            item, newNote),
+                                                    decoration:
+                                                        const InputDecoration(
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius.all(
+                                                          Radius.circular(8),
+                                                        ),
+                                                      ),
+                                                      hintText:
+                                                          'Ajouter une note',
+                                                      contentPadding:
+                                                          EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 8),
+                                                    ),
                                                     style: const TextStyle(
-                                                        fontSize: 14),
+                                                      fontSize: 14,
+                                                      color: Colors.black,
+                                                    ),
+                                                    maxLines: null,
+                                                    minLines: 1,
                                                   ),
-                                                  IconButton(
-                                                    icon: const Icon(Icons.add),
-                                                    onPressed: () {
-                                                      _updateItemQuantity(
-                                                          item, quantity + 1);
-                                                    },
-                                                  ),
-                                                ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (item.supplements != null &&
+                                          item.supplements!.isNotEmpty)
+                                        Padding(
+                                          padding:
+                                              const EdgeInsets.only(top: 2.0),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'Suppléments:',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
                                               ),
-                                              Text(
-                                                '${totalPrice.toStringAsFixed(2)} dt',
-                                                style: const TextStyle(
-                                                    fontSize: 14),
+                                              Wrap(
+                                                spacing: 4.0,
+                                                runSpacing: 2.0,
+                                                children: item.supplements!
+                                                    .map((supplement) {
+                                                  return Chip(
+                                                    label: Text(
+                                                      '${supplement.name}',
+                                                      style: const TextStyle(
+                                                          fontSize: 12),
+                                                    ),
+                                                    deleteIcon: const Icon(
+                                                      Icons.remove,
+                                                      color: Colors.black,
+                                                    ),
+                                                    onDeleted: () =>
+                                                        _handleSupplementRemove(
+                                                            item, supplement),
+                                                    backgroundColor:
+                                                        Colors.grey.shade50,
+                                                  );
+                                                }).toList(),
                                               ),
                                             ],
                                           ),
-                                          TextFormField(
-                                            initialValue: note,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Note',
-                                              border: OutlineInputBorder(),
-                                            ),
-                                            onChanged: (newNote) {
-                                              _updateItemNote(item, newNote);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (supplements.isNotEmpty)
-                                      Padding(
-                                        padding: const EdgeInsets.all(4.0),
-                                        child: SizedBox(
-                                          height: 30,
-                                          child: ListView.builder(
-                                            scrollDirection: Axis.horizontal,
-                                            itemCount: supplements.length,
-                                            itemBuilder: (context, index) {
-                                              final supplement =
-                                                  supplements[index];
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                    right: 4.0),
-                                                child: Chip(
-                                                  label: Text(
-                                                    supplement.name,
-                                                    style: const TextStyle(
-                                                        color: Colors.white),
-                                                  ),
-                                                  side: BorderSide.none,
-                                                  backgroundColor:
-                                                      const Color.fromARGB(
-                                                          255, 231, 29, 69),
-                                                  deleteIcon: const Icon(
-                                                      Icons.remove,
-                                                      color: Colors.white,
-                                                      size: 18),
-                                                  onDeleted: () {
-                                                    _handleSupplementRemove(
-                                                        context,
-                                                        item,
-                                                        supplement);
-                                                  },
-                                                ),
-                                              );
-                                            },
-                                          ),
                                         ),
-                                      ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
@@ -352,69 +427,123 @@ class _TabContentState extends State<TabContent> {
                       ),
               ),
               Padding(
-                padding: const EdgeInsets.all(12.0),
+                padding: const EdgeInsets.all(8.0),
                 child: Container(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(10.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    gradient: LinearGradient(
+                      colors: [
+                        Color.fromARGB(255, 170, 174, 171),
+                        AppTheme.lightTheme.primaryColor
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
-                      const BoxShadow(
-                        color: Colors.black12,
-                        blurRadius: 4.0,
-                        offset: Offset(0, 2),
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 8.0,
+                        offset: Offset(0, 4),
                       ),
                     ],
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Total:',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                          Text(
+                            'Sous-total',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
                           Text(
                             '${subTotal.toStringAsFixed(2)} dt',
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
                             ),
                           ),
                         ],
                       ),
+                      SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Taxe(5%)',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '${tax.toStringAsFixed(2)} dt',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            '${total.toStringAsFixed(2)} dt',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Center(
+                        child: ElevatedButton.icon(
+                          onPressed: () => _handleOrderSubmit(context),
+                          icon: const Icon(Icons.shopping_cart,
+                              color: Colors.white),
+                          label: const Text(
+                            'Confirmer la commande',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            backgroundColor:
+                                const Color.fromARGB(255, 91, 128, 93),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 5,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text(
-                      'Annuler ',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      _handleOrderSubmit(context);
-                      roomController.getRoomList();
-                    },
-                    child: Text(
-                      'Passer la commande',
-                      style: TextStyle(color: AppTheme.lightTheme.primaryColor),
-                    ),
-                  ),
-                ],
               ),
             ],
           );

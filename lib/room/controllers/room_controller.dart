@@ -118,6 +118,7 @@ class RoomController extends GetxController {
       );
       if (response.statusCode == 200) {
         tableList.add(table);
+        tableList.refresh;
         print('Table added successfully: ${response.data}');
       } else {
         print('Failed to add table. Status code: ${response.statusCode}');
@@ -152,6 +153,31 @@ class RoomController extends GetxController {
       }
     } catch (e) {
       print('Error deleting room: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteTable(int tableId) async {
+    try {
+      isLoading.value = true;
+      final response = await _clientDio.dio.delete(
+        Constants.deleteTableUrl(tableId.toString()),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+      if (response.statusCode == 200) {
+        tableList.removeWhere((table) => table.id == tableId);
+        tableList.refresh;
+        print('Table deleted successfully');
+      } else {
+        print('Failed to delete table. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error deleting table: $e');
     } finally {
       isLoading.value = false;
     }

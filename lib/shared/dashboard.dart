@@ -6,7 +6,7 @@ import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
-import 'package:pos/room/widgets/appbar_widget.dart';
+import 'package:pos/shared/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 import 'widgets/category_pieChart.dart';
@@ -118,7 +118,7 @@ class DashboardPage extends StatelessWidget {
                     color: Colors.white,
                     elevation: 2,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(0),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: Column(
                       children: [
@@ -174,7 +174,7 @@ class DashboardPage extends StatelessWidget {
         child: Card(
           elevation: 3,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(0),
+            borderRadius: BorderRadius.circular(12),
           ),
           color: Colors.white,
           child: Padding(
@@ -289,7 +289,7 @@ class DashboardPage extends StatelessWidget {
         color: Colors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0),
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Container(
           height: 500,
@@ -325,7 +325,7 @@ class DashboardPage extends StatelessWidget {
             child: Card(
               elevation: 3,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(0),
+                borderRadius: BorderRadius.circular(10),
               ),
               color: Colors.white,
               child: Padding(
@@ -400,16 +400,16 @@ class OrderItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      // leading: CircleAvatar(
-      // backgroundImage: NetworkImage(item.imageUrl),
-      // ),
+      leading: CircleAvatar(
+        backgroundImage: NetworkImage(item.imageUrl),
+      ),
       title: Text(item.name, style: TextStyle(fontWeight: FontWeight.bold)),
       subtitle: Text('${item.quantity} commandes'),
       trailing: Container(
         padding: EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.orange,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
           '${category?.name ?? 'Unknown Category'}',

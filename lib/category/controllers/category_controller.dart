@@ -115,6 +115,7 @@ class CategoryController extends GetxController {
       );
       if (response.statusCode == 201) {
         categoryItems.add(newItem);
+        categoryItems.refresh();
       } else {}
     } catch (e) {
       print('Error adding new item: $e');

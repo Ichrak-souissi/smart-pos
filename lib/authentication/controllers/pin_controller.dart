@@ -34,7 +34,7 @@ class PinController extends GetxController {
 
         AuthController().setLoggedIn(true);
 
-        Get.offAll(() => const Home());
+        Get.offAll(() => Home());
       } else {
         throw (
           response: response,

@@ -47,6 +47,7 @@ class Constants {
       '$baseUrl${updateTableEndpoint.replaceFirst('{id}', id)}';
   static String getTablesByRoomIdUrl(String id) =>
       '$baseUrl$tableEndpoint/room/$id';
+  static String deleteTableUrl(String id) => '$baseUrl$tableEndpoint/$id';
 
   // URLs pour les endpoints liés aux reservation
   static String addReservationUrl() => '$baseUrl$addReservationEndpoint';
@@ -121,5 +122,5 @@ class Constants {
 
   static updateOrder(String id) => '$baseUrl$ordersEndpoint/$id';
 
-  static deleteOrderUrl(String id) => '$baseUrl$ordersEndpoint$id';
+  static deleteOrderUrl(String id) => '$baseUrl$ordersEndpoint/$id';
 }

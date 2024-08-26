@@ -5,11 +5,11 @@ import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/category/models/category.dart';
 import 'package:pos/item/models/item.dart';
 import 'package:pos/item/views/item_detail.dart';
-import 'package:pos/room/widgets/appbar_widget.dart';
+import 'package:pos/shared/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
 class ItemManagement extends StatefulWidget {
-  const ItemManagement({super.key});
+  const ItemManagement({Key? key}) : super(key: key);
 
   @override
   _ItemManagementState createState() => _ItemManagementState();
@@ -27,12 +27,21 @@ class _ItemManagementState extends State<ItemManagement> {
     _loadCategoryItems();
   }
 
-  void _loadCategoryItems() async {
+  Future<void> _loadCategoryItems() async {
     await categoryController.getCategoryList();
     if (categoryController.categoryList.isNotEmpty) {
       await categoryController
           .getItemsByCategoryId(categoryController.categoryList[0].id);
-      setState(() {}); // To refresh the UI
+      setState(() {});
+    }
+  }
+
+  Future<void> _onCategoryChanged(int index) async {
+    if (categoryController.categoryList.isNotEmpty) {
+      await categoryController.getItemsByCategoryId(
+        categoryController.categoryList[index].id,
+      );
+      setState(() {});
     }
   }
 
@@ -64,15 +73,6 @@ class _ItemManagementState extends State<ItemManagement> {
     );
   }
 
-  void _onCategoryChanged(int index) async {
-    if (categoryController.categoryList.isNotEmpty) {
-      await categoryController.getItemsByCategoryId(
-        categoryController.categoryList[index].id,
-      );
-      setState(() {});
-    }
-  }
-
   void _showDeleteCategoryDialog(Category category) {
     showDialog(
       context: context,
@@ -91,15 +91,15 @@ class _ItemManagementState extends State<ItemManagement> {
             TextButton(
               onPressed: () async {
                 await categoryController.deleteCategory(category);
-
                 Get.snackbar(
                   'Succès',
                   'La catégorie ${category.name} a été supprimée avec succès.',
                   snackPosition: SnackPosition.BOTTOM,
                   duration: const Duration(seconds: 3),
                 );
-                // ignore: use_build_context_synchronously
                 Navigator.of(context).pop();
+                await categoryController.getCategoryList();
+                setState(() {});
               },
               child: const Text('Supprimer'),
             ),
@@ -117,10 +117,6 @@ class _ItemManagementState extends State<ItemManagement> {
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Obx(() {
-              if (categoryController.categoryList.isEmpty) {
-                return const Text('No categories available');
-              }
-
               return Row(
                 children: [
                   ...categoryController.categoryList
@@ -133,7 +129,9 @@ class _ItemManagementState extends State<ItemManagement> {
 
                     return GestureDetector(
                       onTap: () {
-                        selectedCategoryIndex = index;
+                        setState(() {
+                          selectedCategoryIndex = index;
+                        });
                         _onCategoryChanged(index);
                       },
                       child: Container(
@@ -208,10 +206,9 @@ class _ItemManagementState extends State<ItemManagement> {
         );
       } else if (categoryController.categoryList.isEmpty) {
         return const Center(
-          child: Text('No categories available'),
+          child: Text('Aucune catégorie disponible'),
         );
       } else {
-        // Ensure selectedCategoryIndex is within bounds
         final int safeIndex =
             (selectedCategoryIndex < categoryController.categoryList.length &&
                     selectedCategoryIndex >= 0)
@@ -237,213 +234,335 @@ class _ItemManagementState extends State<ItemManagement> {
 
   Widget _buildItemsGridView(Category category) {
     return Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
-            return Obx(() {
-              var items = categoryController.categoryItems;
+      padding: const EdgeInsets.all(8.0),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          int crossAxisCount = _calculateCrossAxisCount(constraints.maxWidth);
+          return Obx(() {
+            var items = categoryController.categoryItems;
 
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const AlwaysScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  mainAxisSpacing: 20.0,
-                  crossAxisSpacing: 20.0,
-                  childAspectRatio: 0.8,
-                ),
-                itemCount: items.length + 1,
-                itemBuilder: (context, index) {
-                  if (index < items.length) {
-                    final item = items[index];
-                    final isNew = isNewItem(item.createdAt);
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const AlwaysScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                mainAxisSpacing: 20.0,
+                crossAxisSpacing: 20.0,
+                childAspectRatio: 0.8,
+              ),
+              itemCount: items.length + 1,
+              itemBuilder: (context, index) {
+                if (index < items.length) {
+                  final item = items[index];
+                  final isNew = isNewItem(item.createdAt);
 
-                    return Dismissible(
-                      key: Key(item.id.toString()),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (direction) async {
-                        await categoryController.deleteItem(item.id);
-                        // Reload items after deletion
-                        await categoryController
-                            .getItemsByCategoryId(category.id);
-                        setState(() {}); // Refresh the UI
-                        Get.snackbar(
-                          'Succès',
-                          'L\'item ${item.name} a été supprimé avec succès.',
-                          snackPosition: SnackPosition.BOTTOM,
-                          duration: const Duration(seconds: 3),
+                  return Dismissible(
+                    key: Key(item.id.toString()),
+                    direction: DismissDirection.endToStart,
+                    onDismissed: (direction) async {
+                      await categoryController.deleteItem(item.id);
+                      await categoryController
+                          .getItemsByCategoryId(category.id);
+                      setState(() {});
+                      Get.snackbar(
+                        'Succès',
+                        'L\'item ${item.name} a été supprimé avec succès.',
+                        snackPosition: SnackPosition.BOTTOM,
+                        duration: const Duration(seconds: 3),
+                      );
+                    },
+                    background: Container(
+                      color: Colors.red,
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: const Icon(Icons.delete, color: Colors.white),
+                    ),
+                    child: GestureDetector(
+                      onTap: () async {
+                        final updatedItem = await showDialog<Item>(
+                          context: context,
+                          builder: (BuildContext context) =>
+                              ItemDetailDialog(item: item),
                         );
-                      },
-                      background: Container(
-                        color: Colors.red,
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      child: GestureDetector(
-                        onTap: () async {
-                          final updatedItem = await showDialog<Item>(
-                            context: context,
-                            builder: (BuildContext context) =>
-                                ItemDetailDialog(item: item),
-                          );
 
-                          if (updatedItem != null) {
-                            int index = categoryController.categoryItems
-                                .indexWhere((i) => i.id == updatedItem.id);
-                            if (index != -1) {
-                              setState(() {
-                                categoryController.categoryItems[index] =
-                                    updatedItem;
-                              });
-                            }
+                        if (updatedItem != null) {
+                          int index = categoryController.categoryItems
+                              .indexWhere((i) => i.id == updatedItem.id);
+                          if (index != -1) {
+                            setState(() {
+                              categoryController.categoryItems[index] =
+                                  updatedItem;
+                            });
                           }
-                        },
-                        child: Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.grey.shade200,
-                              width: 1,
+                        }
+                      },
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey.shade200,
+                                width: 1,
+                              ),
+                              color: item.isActive
+                                  ? Colors.white
+                                  : Colors.grey.shade300,
                             ),
-                            color: Colors.white,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(5.0),
-                                  child: Container(
-                                      // Your image code here
-                                      ),
-                                ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.all(5.0),
-                                child: Text(
-                                  item.name,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 17,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                              Row(
-                                children: [
-                                  const Padding(
-                                    padding:
-                                        EdgeInsets.only(left: 10, right: 5),
-                                    child: Icon(
-                                      Icons.whatshot_sharp,
-                                      color: Colors.orange,
-                                      size: 15,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${item.calories.toString()} calories',
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: item.discount != null &&
-                                            item.discount != 0
-                                        ? Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${item.price.toStringAsFixed(2)} dt',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                  color: Colors.grey.shade500,
-                                                  decoration: TextDecoration
-                                                      .lineThrough,
-                                                ),
-                                              ),
-                                              Text(
-                                                '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 14,
-                                                  color: Colors.red,
-                                                ),
-                                              ),
-                                            ],
-                                          )
-                                        : Text(
-                                            '${item.price.toStringAsFixed(2)} dt',
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                              color: Colors.grey.shade500,
-                                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Container(
+                                      child: Container(
+                                        width: double.infinity,
+                                        decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(item.imageUrl),
+                                            fit: BoxFit.cover,
+                                            colorFilter: item.isActive
+                                                ? null
+                                                : ColorFilter.mode(
+                                                    Colors.grey,
+                                                    BlendMode.saturation,
+                                                  ),
                                           ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) =>
-                                              ItemDetailDialog(item: item),
-                                        ).then((_) {
-                                          setState(() {
-                                            categoryController.categoryItems;
-                                          });
-                                        });
-                                      },
-                                      child: const Text(
-                                        'Modifier',
-                                        style: TextStyle(
-                                          color: Colors.blue,
-                                          fontSize: 16,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(5.0),
+                                  child: Text(
+                                    item.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 17,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Row(
+                                  children: [
+                                    const Padding(
+                                      padding:
+                                          EdgeInsets.only(left: 10, right: 5),
+                                      child: Icon(
+                                        Icons.whatshot_sharp,
+                                        color: Colors.orange,
+                                        size: 15,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${item.calories.toString()} calories',
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: item.discount != null &&
+                                              item.discount != 0
+                                          ? Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${item.price.toStringAsFixed(2)} dt',
+                                                  style: TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: Colors.grey.shade500,
+                                                    decoration: TextDecoration
+                                                        .lineThrough,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                    color: Colors.red,
+                                                  ),
+                                                ),
+                                              ],
+                                            )
+                                          : Text(
+                                              '${item.price.toStringAsFixed(2)} dt',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Colors.grey.shade500,
+                                              ),
+                                            ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) =>
+                                                ItemDetailDialog(item: item),
+                                          ).then((_) {
+                                            setState(() {
+                                              categoryController.categoryItems;
+                                            });
+                                          });
+                                        },
+                                        child: const Text(
+                                          'Modifier',
+                                          style: TextStyle(
+                                            color: Colors.blue,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!item.isActive)
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                color: Colors.black.withOpacity(0.5),
                               ),
-                            ],
-                          ),
-                        ),
+                              child: Center(
+                                child: Text(
+                                  'Non disponible',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                    );
-                  } else {
-                    return GestureDetector(
-                      onTap: _showAddItemDialog,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.grey.shade200,
-                            width: 1,
-                          ),
-                          color: Colors.grey.shade100,
+                    ),
+                  );
+                } else {
+                  return GestureDetector(
+                    onTap: _showAddItemDialog,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey.shade200,
+                          width: 1,
                         ),
-                        child: Icon(Icons.add,
-                            size: 50, color: AppTheme.lightTheme.primaryColor),
+                        color: Colors.grey.shade100,
                       ),
-                    );
-                  }
-                },
-              );
-            });
-          },
-        ));
+                      child: Icon(Icons.add,
+                          size: 50, color: AppTheme.lightTheme.primaryColor),
+                    ),
+                  );
+                }
+              },
+            );
+          });
+        },
+      ),
+    );
+  }
+
+  Future<void> _showAddCategoryDialog() async {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController imageUrlController = TextEditingController();
+    GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Ajouter une catégorie'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: nameController,
+                  decoration:
+                      const InputDecoration(labelText: 'Nom de la catégorie'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Entrer le nom de la catégorie';
+                    }
+                    return null;
+                  },
+                ),
+                TextFormField(
+                  controller: imageUrlController,
+                  decoration:
+                      const InputDecoration(labelText: 'URL de l\'image'),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Entrer l\'URL de l\'image';
+                    }
+                    return null;
+                  },
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text(
+                'Annuler',
+                style: TextStyle(color: Colors.redAccent),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text(
+                'Ajouter',
+                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+              ),
+              onPressed: () async {
+                if (formKey.currentState!.validate()) {
+                  final newCategory = Category(
+                    id: categoryController.categoryList.length + 1,
+                    name: nameController.text,
+                    imageUrl: imageUrlController.text,
+                    isActive: true,
+                    items: [],
+                  );
+                  await categoryController.addNewCategory(newCategory);
+                  Navigator.of(context).pop();
+                  await categoryController.getCategoryList();
+                  setState(() {});
+                  Get.snackbar(
+                    'Succès',
+                    'La catégorie ${newCategory.name} a été ajoutée avec succès.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    duration: const Duration(seconds: 3),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _showAddItemDialog() async {
@@ -563,79 +682,77 @@ class _ItemManagementState extends State<ItemManagement> {
         );
       },
     );
-  }
 
-  void _showAddCategoryDialog() {
-    TextEditingController nameController = TextEditingController();
-    TextEditingController imageUrlController = TextEditingController();
-    GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    void _showAddCategoryDialog() {
+      TextEditingController nameController = TextEditingController();
+      TextEditingController imageUrlController = TextEditingController();
+      GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Ajouter une catégorie"),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration:
-                      const InputDecoration(labelText: "Nom de la catégorie"),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Entrer le nom de la catégorie';
-                    }
-                    return null;
-                  },
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Ajouter une catégorie"),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration:
+                        const InputDecoration(labelText: "Nom de la catégorie"),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Entrer le nom de la catégorie';
+                      }
+                      return null;
+                    },
+                  ),
+                ],
+              ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                child: const Text(
+                  "Annuler",
+                  style: TextStyle(color: Colors.redAccent),
                 ),
-                // Autres champs de formulaire
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text(
-                "Annuler",
-                style: TextStyle(color: Colors.redAccent),
-              ),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(
-                "Ajouter",
-                style: TextStyle(color: AppTheme.lightTheme.primaryColor),
-              ),
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  Category newCategory = Category(
-                    id: categoryController.categoryList.length + 1,
-                    name: nameController.text,
-                    imageUrl: imageUrlController.text,
-                    isActive: true,
-                    items: [],
-                  );
-                  await categoryController.addNewCategory(newCategory);
+                onPressed: () {
                   Navigator.of(context).pop();
-                  // Rafraîchir la liste des catégories après ajout
-                  await categoryController.getCategoryList();
-                  setState(() {});
-                  Get.snackbar(
-                    'Succès',
-                    'La catégorie ${newCategory.name} a été ajoutée avec succès.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    duration: const Duration(seconds: 3),
-                  );
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
+                },
+              ),
+              TextButton(
+                child: Text(
+                  "Ajouter",
+                  style: TextStyle(color: AppTheme.lightTheme.primaryColor),
+                ),
+                onPressed: () async {
+                  if (formKey.currentState!.validate()) {
+                    Category newCategory = Category(
+                      id: categoryController.categoryList.length + 1,
+                      name: nameController.text,
+                      imageUrl: imageUrlController.text,
+                      isActive: true,
+                      items: [],
+                    );
+                    await categoryController.addNewCategory(newCategory);
+                    Navigator.of(context).pop();
+                    await categoryController.getCategoryList();
+                    setState(() {});
+                    Get.snackbar(
+                      'Succès',
+                      'La catégorie ${newCategory.name} a été ajoutée avec succès.',
+                      snackPosition: SnackPosition.BOTTOM,
+                      duration: const Duration(seconds: 3),
+                    );
+                  }
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 }

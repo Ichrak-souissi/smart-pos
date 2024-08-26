@@ -151,4 +151,34 @@ class OrderController extends GetxController {
       isLoadingOrders.value = false;
     }
   }
+
+  Future<void> updateOrderStatus(String orderId, int newStatus) async {
+    try {
+      isLoadingOrders.value = true;
+      final url = Constants.updateOrder(orderId);
+      print('Updating order status for ID: $orderId to status: $newStatus');
+      print('Request URL: $url');
+      final response =
+          await _clientDio.dio.patch(url, data: {"status": newStatus});
+      print('Response status code: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        int index = orders.indexWhere((order) => order.id == orderId);
+        if (index != -1) {
+          orders[index].status = newStatus;
+          orders.refresh();
+          print('Order with ID: $orderId status updated to $newStatus');
+        } else {
+          print('Order with ID: $orderId not found in local orders');
+        }
+      } else {
+        throw Exception(
+            'Failed to update order status. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error updating order status with ID: $orderId: $e');
+      rethrow;
+    } finally {
+      isLoadingOrders.value = false;
+    }
+  }
 }

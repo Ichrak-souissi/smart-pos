@@ -1,42 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:pos/app_theme.dart';
 
 class PinCodeField extends StatelessWidget {
   final String pin;
   final int pinCodeFieldIndex;
   final PinThemeData theme;
-  final Function(String) onChanged;
+  final ValueChanged<String> onChanged;
 
   const PinCodeField({
     required Key key,
     required this.pin,
     required this.pinCodeFieldIndex,
     required this.onChanged,
-    required this.theme,
+    this.theme = const PinThemeData(),
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final isActive = pin.length > pinCodeFieldIndex;
+    final textColor = theme.textColor;
+
     return Container(
       width: theme.size,
       height: theme.size,
       margin: EdgeInsets.symmetric(horizontal: theme.margin),
-      decoration: BoxDecoration(
-        color: pin.length > pinCodeFieldIndex
-            ? AppTheme.lightTheme.primaryColor
-            : Colors.transparent,
-        border: Border.all(
-          color: AppTheme.lightTheme.primaryColor,
-          width: 2.0,
-        ),
-        borderRadius: BorderRadius.circular(10.0),
-      ),
       child: Center(
         child: Text(
-          pin.length > pinCodeFieldIndex ? '•' : '',
+          isActive ? '*' : '_',
           style: TextStyle(
             fontSize: theme.fontSize,
-            color: theme.textColor,
+            color: textColor,
             fontWeight: theme.fontWeight,
           ),
         ),
@@ -48,17 +40,37 @@ class PinCodeField extends StatelessWidget {
 class PinThemeData {
   final double size;
   final double margin;
-  final Color color;
+  final Color activeFillColor;
+  final Color inactiveFillColor;
+  final Color borderColor;
+  final double borderWidth;
+  final double borderRadius;
   final Color textColor;
+  final Color inactiveTextColor;
   final double fontSize;
   final FontWeight fontWeight;
+  final bool showShadow;
+  final Color shadowColor;
+  final double shadowSpreadRadius;
+  final double shadowBlurRadius;
+  final Offset shadowOffset;
 
-  PinThemeData({
+  const PinThemeData({
     this.size = 50.0,
-    this.margin = 10.0,
-    this.color = Colors.transparent,
-    this.textColor = Colors.white,
+    this.margin = 5.0,
+    this.activeFillColor = Colors.transparent,
+    this.inactiveFillColor = Colors.transparent,
+    this.borderColor = Colors.transparent,
+    this.borderWidth = 0.0,
+    this.borderRadius = 0.0,
+    this.textColor = Colors.black,
+    this.inactiveTextColor = Colors.black,
     this.fontSize = 30.0,
     this.fontWeight = FontWeight.bold,
+    this.showShadow = false,
+    this.shadowColor = Colors.transparent,
+    this.shadowSpreadRadius = 0.0,
+    this.shadowBlurRadius = 1.0,
+    this.shadowOffset = Offset.zero,
   });
 }
