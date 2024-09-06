@@ -40,6 +40,8 @@ class UserController extends GetxController {
           'role': newUser.role,
           'code': newUser.code,
           'phone': newUser.phone,
+          'workHours': newUser.workHours,
+          'email': newUser.email,
         },
       );
 
@@ -74,6 +76,8 @@ class UserController extends GetxController {
           'role': user.role,
           'code': user.code,
           'phone': user.phone,
+          'workHours': user.workHours,
+          'email': user.email,
         },
       );
 

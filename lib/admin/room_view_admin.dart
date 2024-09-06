@@ -222,46 +222,29 @@ class _RoomViewState extends State<RoomViewAdmin> {
     );
   }
 
-  void _showDeleteTableDialog(TableModel.Table table) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Supprimer la table'),
-          content: Text(
-              'Êtes-vous sûr de vouloir supprimer la table ${table.position}?'),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Annuler'),
-            ),
-            TextButton(
-              onPressed: () async {
-                try {
-                  await roomController.deleteTable(table.id);
-                  roomController.tableList.remove(table);
-                  roomController.roomList[selectedRoomIndex].tables
-                      .remove(table);
+  void _deleteTable(TableModel.Table table) async {
+    try {
+      await roomController.deleteTable(table.id);
+      setState(() {
+        roomController.tableList.remove(table);
+        roomController.roomList[selectedRoomIndex].tables.remove(table);
+      });
 
-                  Get.snackbar(
-                    'Succès',
-                    'La table ${table.position} a été supprimée avec succès.',
-                    snackPosition: SnackPosition.BOTTOM,
-                    duration: const Duration(seconds: 3),
-                  );
-                } catch (e) {
-                  print('Erreur lors de la suppression de la table: $e');
-                }
-                Navigator.of(context).pop();
-              },
-              child: const Text('Supprimer'),
-            ),
-          ],
-        );
-      },
-    );
+      Get.snackbar(
+        'Succès',
+        'La table ${table.position} a été supprimée avec succès.',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    } catch (e) {
+      print('Erreur lors de la suppression de la table: $e');
+      Get.snackbar(
+        'Erreur',
+        'Erreur lors de la suppression de la table.',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
   void _showAddRoomDialog() {
@@ -542,7 +525,7 @@ class _RoomViewState extends State<RoomViewAdmin> {
                                 key: Key(table.id.toString()),
                                 direction: DismissDirection.endToStart,
                                 onDismissed: (direction) async {
-                                  _showDeleteTableDialog(table);
+                                  _deleteTable(table);
                                 },
                                 background: Container(
                                   color: Colors.red,

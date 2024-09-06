@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/controllers/pin_controller.dart';
 import 'package:pos/authentication/controllers/user_controller.dart';
@@ -15,11 +15,9 @@ class StaffManagement extends StatefulWidget {
   State<StaffManagement> createState() => _StaffManagementState();
 }
 
-class _StaffManagementState extends State<StaffManagement>
-    with SingleTickerProviderStateMixin {
+class _StaffManagementState extends State<StaffManagement> {
   final PinController pinController = Get.put(PinController());
   final UserController userController = Get.put(UserController());
-  late TabController _tabController;
   late List<User> filteredUsers = [];
   final Map<int, TextEditingController> nameControllers = {};
   final Map<int, TextEditingController> roleControllers = {};
@@ -28,17 +26,15 @@ class _StaffManagementState extends State<StaffManagement>
   final Map<int, TextEditingController> workHoursControllers = {};
   final Map<int, TextEditingController> emailControllers = {};
   final Set<int> editingUsers = Set<int>();
+  TimeOfDay? _startTime;
+  TimeOfDay? _endTime;
+
+  String _selectedRole = 'all';
+  bool _isCodeVisible = false;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
-    _tabController.addListener(_handleTabSelection);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
     _initializeData();
   }
 
@@ -47,35 +43,83 @@ class _StaffManagementState extends State<StaffManagement>
     _filterUsers();
   }
 
-  void _handleTabSelection() {
-    _filterUsers();
+  void _filterUsers() {
+    setState(() {
+      switch (_selectedRole) {
+        case 'waiter':
+          filteredUsers = userController.users
+              .where((user) => user.role == 'waiter')
+              .toList();
+          break;
+        case 'admin':
+          filteredUsers = userController.users
+              .where((user) => user.role == 'admin')
+              .toList();
+          break;
+        case 'chief':
+          filteredUsers = userController.users
+              .where((user) => user.role == 'chief')
+              .toList();
+          break;
+        default:
+          filteredUsers = userController.users;
+          break;
+      }
+    });
   }
 
-  void _filterUsers() {
-    switch (_tabController.index) {
-      case 0:
-        filteredUsers = userController.users;
-        break;
-      case 1:
-        filteredUsers = userController.users
-            .where((user) => user.role == 'waiter')
-            .toList();
-        break;
-      case 2:
-        filteredUsers =
-            userController.users.where((user) => user.role == 'admin').toList();
-        break;
-      case 3:
-        filteredUsers =
-            userController.users.where((user) => user.role == 'chief').toList();
-        break;
-      default:
-        filteredUsers = [];
-        break;
-    }
-    setState(() {
-      filteredUsers;
-    });
+  Widget _buildCategoryBoxes() {
+    final roles = ['Tous', 'Serveurs', 'Admins', 'Chefs'];
+    final roleValues = ['all', 'waiter', 'admin', 'chief'];
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: List.generate(roles.length, (index) {
+            final role = roles[index];
+            final roleValue = roleValues[index];
+            final isSelected = _selectedRole == roleValue;
+
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedRole = roleValue;
+                });
+                _filterUsers();
+              },
+              child: Container(
+                margin: const EdgeInsets.only(right: 8.0),
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? AppTheme.lightTheme.primaryColor
+                      : Colors.white,
+                  border: Border.all(
+                    color: AppTheme.lightTheme.primaryColor,
+                    width: isSelected ? 0 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Text(
+                      role,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
   }
 
   @override
@@ -93,32 +137,13 @@ class _StaffManagementState extends State<StaffManagement>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    Spacer(),
+                    _buildCategoryBoxes(),
                   ],
                 ),
-              ),
-              TabBar(
-                controller: _tabController,
-                labelColor: Colors.black,
-                indicatorColor: AppTheme.lightTheme.primaryColor,
-                tabs: [
-                  Tab(text: 'Tous'),
-                  Tab(text: 'Serveurs'),
-                  Tab(text: 'Admins'),
-                  Tab(text: 'Chefs'),
-                ],
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height - 250,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildTable(filteredUsers),
-                    _buildTable(filteredUsers),
-                    _buildTable(filteredUsers),
-                    _buildTable(filteredUsers),
-                  ],
-                ),
+                child: _buildTable(filteredUsers),
               ),
             ],
           ),
@@ -126,7 +151,10 @@ class _StaffManagementState extends State<StaffManagement>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddUserDialog,
-        child: Icon(Icons.add),
+        child: Icon(
+          Icons.add,
+          color: Colors.green,
+        ),
       ),
     );
   }
@@ -206,9 +234,24 @@ class _StaffManagementState extends State<StaffManagement>
                   editingUsers.contains(user.id)
                       ? TextFormField(
                           controller: codeControllers[user.id],
-                          decoration: InputDecoration(border: InputBorder.none),
+                          obscureText: !_isCodeVisible,
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isCodeVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isCodeVisible = !_isCodeVisible;
+                                });
+                              },
+                            ),
+                          ),
                         )
-                      : Text(user.code),
+                      : Text(_isCodeVisible ? user.code : '********'),
                 ),
                 DataCell(
                   editingUsers.contains(user.id)
@@ -232,8 +275,9 @@ class _StaffManagementState extends State<StaffManagement>
                       ? TextFormField(
                           controller: emailControllers[user.id],
                           decoration: InputDecoration(border: InputBorder.none),
+                          keyboardType: TextInputType.emailAddress,
                         )
-                      : Text(user.email),
+                      : Text(user.email ?? ''),
                 ),
                 DataCell(
                   Row(
@@ -244,55 +288,45 @@ class _StaffManagementState extends State<StaffManagement>
                           onPressed: () async {
                             final updatedUser = User(
                               id: user.id,
-                              name: nameControllers[user.id]?.text ?? user.name,
-                              email:
-                                  emailControllers[user.id]?.text ?? user.email,
-                              image: user.image,
-                              role: roleControllers[user.id]?.text ?? user.role,
-                              code: codeControllers[user.id]?.text ?? user.code,
-                              phone: int.tryParse(
-                                      phoneControllers[user.id]?.text ?? '') ??
-                                  user.phone,
-                              workHours: workHoursControllers[user.id]?.text ??
-                                  user.workHours,
+                              name: nameControllers[user.id]!.text,
+                              role: roleControllers[user.id]!.text,
+                              code: codeControllers[user.id]!.text,
+                              phone: int.parse(phoneControllers[user.id]!.text),
+                              workHours: workHoursControllers[user.id]!.text,
+                              email: emailControllers[user.id]!.text,
                             );
+
                             await userController.updateUser(updatedUser);
 
                             setState(() {
-                              final index = filteredUsers
-                                  .indexWhere((u) => u.id == user.id);
-                              if (index != -1) {
-                                filteredUsers[index] = updatedUser;
-                              }
                               editingUsers.remove(user.id);
+                              _initializeData();
                             });
                           },
-                        )
-                      else
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blueGrey),
-                          onPressed: () {
-                            setState(() {
+                        ),
+                      IconButton(
+                        icon: editingUsers.contains(user.id)
+                            ? Icon(Icons.cancel, color: Colors.red)
+                            : Icon(Icons.edit),
+                        onPressed: () {
+                          setState(() {
+                            if (editingUsers.contains(user.id)) {
+                              editingUsers.remove(user.id);
+                            } else {
                               editingUsers.add(user.id);
-                            });
-                          },
-                        ),
-                      if (editingUsers.contains(user.id))
-                        IconButton(
-                          icon: Icon(Icons.cancel, color: Colors.redAccent),
-                          onPressed: () {
-                            setState(() {
-                              editingUsers.remove(user.id);
-                            });
-                          },
-                        )
-                      else
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.redAccent),
-                          onPressed: () {
-                            _showDeleteConfirmationDialog(user);
-                          },
-                        ),
+                            }
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () async {
+                          await userController.deleteUser(user.id);
+                          setState(() {
+                            _initializeData();
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -304,151 +338,234 @@ class _StaffManagementState extends State<StaffManagement>
     );
   }
 
-  void _showDeleteConfirmationDialog(User user) {
-    showDialog(
+  Future<void> _showAddUserDialog() async {
+    String _selectedRole = 'waiter';
+    TimeOfDay? _startTime;
+    TimeOfDay? _endTime;
+
+    final _formKey = GlobalKey<FormState>(); // Ajoutez cette ligne
+
+    final nameController = TextEditingController();
+    final codeController = TextEditingController();
+    final phoneController = TextEditingController();
+    final workHoursController = TextEditingController();
+    final emailController = TextEditingController();
+
+    return showDialog(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirmer la suppression'),
-          content: Text('Voulez-vous vraiment supprimer cet utilisateur ?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Annuler'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Supprimer'),
-              onPressed: () async {
-                await userController.deleteUser(user.id);
-                setState(() {
-                  filteredUsers.removeWhere((u) => u.id == user.id);
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  File? _pickedImage;
-  final ImagePicker _picker = ImagePicker();
-
-  Future<void> _pickImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _pickedImage = File(pickedFile.path);
-      });
-    }
-  }
-
-  void _showAddUserDialog() {
-    String name = '';
-    String role = '';
-    String code = '';
-    int phone = 0;
-    String workHours = '';
-    String email = '';
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Ajouter un utilisateur'),
-          content: SingleChildScrollView(
+      builder: (context) => AlertDialog(
+        title: Text('Ajouter un utilisateur'),
+        content: SingleChildScrollView(
+          child: Form(
+            key: _formKey, // Utilisez ce formulaire
             child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: CircleAvatar(
-                    radius: 50,
-                    backgroundImage: _pickedImage != null
-                        ? FileImage(_pickedImage!)
-                        : AssetImage('assets/images/user.png') as ImageProvider,
-                    child: Icon(
-                      Icons.add_a_photo,
-                      size: 50,
-                      color: Colors.white.withOpacity(0.7),
-                    ),
+                TextFormField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    labelText: 'Nom',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
                   ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Le nom est requis';
+                    }
+                    return null;
+                  },
                 ),
                 SizedBox(height: 10),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Nom'),
+                DropdownButtonFormField<String>(
+                  value: _selectedRole,
+                  decoration: InputDecoration(
+                    labelText: 'Rôle',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    DropdownMenuItem(value: 'waiter', child: Text('Serveur')),
+                    DropdownMenuItem(
+                        value: 'admin', child: Text('Administrateur')),
+                    DropdownMenuItem(value: 'chief', child: Text('Chef')),
+                  ],
                   onChanged: (value) {
-                    name = value;
+                    setState(() {
+                      _selectedRole = value!;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Le rôle est requis';
+                    }
+                    return null;
                   },
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Rôle'),
-                  onChanged: (value) {
-                    role = value;
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: codeController,
+                  obscureText: !_isCodeVisible,
+                  decoration: InputDecoration(
+                    labelText: 'Code',
+                    prefixIcon: Icon(Icons.pin_sharp),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isCodeVisible
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isCodeVisible = !_isCodeVisible;
+                        });
+                      },
+                    ),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Le code est requis';
+                    }
+                    return null;
                   },
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Code'),
-                  onChanged: (value) {
-                    code = value;
-                  },
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Téléphone'),
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: phoneController,
                   keyboardType: TextInputType.phone,
-                  onChanged: (value) {
-                    phone = int.tryParse(value) ?? 0;
+                  decoration: InputDecoration(
+                    labelText: 'Téléphone',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Le téléphone est requis';
+                    }
+                    if (int.tryParse(value) == null) {
+                      return 'Le numéro de téléphone n\'est pas valide';
+                    }
+                    return null;
                   },
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Horaire de Travail'),
-                  onChanged: (value) {
-                    workHours = value;
-                  },
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final TimeOfDay? pickedStartTime =
+                              await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+                          if (pickedStartTime != null) {
+                            setState(() {
+                              _startTime = pickedStartTime;
+                              workHoursController.text =
+                                  '${_startTime?.format(context)} - ${_endTime?.format(context) ?? ''}';
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.blue,
+                        ),
+                        child: Text(_startTime != null
+                            ? _startTime!.format(context)
+                            : 'Début'),
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final TimeOfDay? pickedEndTime = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay.now(),
+                          );
+                          if (pickedEndTime != null) {
+                            setState(() {
+                              _endTime = pickedEndTime;
+                              workHoursController.text =
+                                  '${_startTime?.format(context) ?? ''} - ${_endTime?.format(context)}';
+                            });
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.green,
+                        ),
+                        child: Text(_endTime != null
+                            ? _endTime!.format(context)
+                            : 'Fin'),
+                      ),
+                    ),
+                  ],
                 ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Email'),
-                  onChanged: (value) {
-                    email = value;
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: workHoursController,
+                  decoration: InputDecoration(
+                    labelText: 'Horaire de Travail',
+                    prefixIcon: Icon(Icons.access_time),
+                    border: OutlineInputBorder(),
+                  ),
+                  enabled: false,
+                ),
+                SizedBox(height: 10),
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(Icons.email),
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value != null &&
+                        value.isNotEmpty &&
+                        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                      return 'Email non valide';
+                    }
+                    return null;
                   },
                 ),
               ],
             ),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Annuler'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Ajouter'),
-              onPressed: () async {
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Annuler', style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState!.validate()) {
                 final newUser = User(
                   id: DateTime.now().millisecondsSinceEpoch,
-                  name: name,
-                  role: role,
-                  code: code,
-                  phone: phone,
-                  workHours: workHours,
-                  email: email,
-                  image: _pickedImage != null
-                      ? _pickedImage!.path
-                      : 'assets/images/user.png',
+                  name: nameController.text,
+                  role: _selectedRole,
+                  code: codeController.text,
+                  phone: int.tryParse(phoneController.text) ?? 0,
+                  workHours: workHoursController.text,
+                  email: emailController.text,
                 );
-                await userController.addUser(newUser);
+                userController.addUser(newUser);
                 Navigator.of(context).pop();
                 setState(() {
                   filteredUsers.add(newUser);
                 });
-              },
-            ),
-          ],
-        );
-      },
+              }
+            },
+            child: Text('Ajouter'),
+          ),
+        ],
+      ),
     );
   }
 }

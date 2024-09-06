@@ -3,8 +3,7 @@ import 'package:equatable/equatable.dart';
 class User extends Equatable {
   final int id;
   final String name;
-  final String email;
-  final String? image;
+  final String? email;
   final String role;
   final String code;
   final int phone;
@@ -13,8 +12,7 @@ class User extends Equatable {
   User({
     required this.id,
     required this.name,
-    required this.email,
-    this.image,
+    this.email,
     required this.role,
     required this.code,
     required this.phone,
@@ -25,8 +23,7 @@ class User extends Equatable {
     return User(
       id: json['id'] ?? 0,
       name: json['name'] ?? '',
-      email: json['email'] ?? '',
-      image: json['image'],
+      email: json['email'],
       role: json['role'] ?? '',
       code: json['code'] ?? '',
       phone: json['phone'] ?? 0,
@@ -39,7 +36,6 @@ class User extends Equatable {
       'id': id,
       'name': name,
       'email': email,
-      'image': image,
       'role': role,
       'code': code,
       'phone': phone,
@@ -48,6 +44,5 @@ class User extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [id, name, email, image, role, code, phone, workHours];
+  List<Object?> get props => [id, name, email, role, code, phone, workHours];
 }

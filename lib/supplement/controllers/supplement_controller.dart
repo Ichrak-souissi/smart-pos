@@ -125,4 +125,6 @@ class SupplementController extends GetxController {
       isLoading.value = false;
     }
   }
+
+  addSupplement(Supplement supplement) {}
 }

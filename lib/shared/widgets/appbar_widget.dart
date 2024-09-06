@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/intl.dart';
 
 class AppBarWidget extends StatelessWidget {
   const AppBarWidget({Key? key}) : super(key: key);
@@ -10,6 +11,9 @@ class AppBarWidget extends StatelessWidget {
     final storage = GetStorage();
     final userName = storage.read('userName') ?? "John Doe";
     final userRole = storage.read('userRole') ?? "manager";
+
+    final String currentDateTime =
+        DateFormat('dd MMM yyyy, HH:mm').format(DateTime.now());
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -28,10 +32,14 @@ class AppBarWidget extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                SizedBox(width: 10),
-                _buildNotification(),
-                SizedBox(width: 10),
-                _buildSettingsButton(),
+                Text(
+                  currentDateTime,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black45,
+                  ),
+                ),
                 SizedBox(width: 10),
                 _buildUserAvatarAndInfo(userName, userRole),
               ],

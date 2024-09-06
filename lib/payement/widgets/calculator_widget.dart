@@ -47,15 +47,60 @@ class _CalculatorWidgetState extends State<CalculatorWidget> {
     if (amountToReturn >= 0) {
       try {
         for (var order in widget.orders) {
-          await orderController.updateOrderStatus(order.id.toString(), 1);
+          // await orderController.updateOrderStatus(order.id.toString(), 1);
+          await orderController.UpdateOrder(order.id.toString());
         }
         await tableController.updateTable(widget.tableId.toString(), false);
 
-        Navigator.of(context).pop();
-      } catch (e) {}
+        showPaymentSuccessDialog();
+      } catch (e) {
+        Get.snackbar('Erreur', 'Une erreur est survenue lors du paiement.');
+      }
     } else {
-      Get.snackbar('Error', '');
+      Get.snackbar('Erreur', 'Le montant saisi est insuffisant.');
     }
+  }
+
+  void showPaymentSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          contentPadding: const EdgeInsets.all(20),
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Icon(
+                Icons.monetization_on_outlined,
+                color: Colors.green,
+                size: 60,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Paiement effectué avec succès.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override

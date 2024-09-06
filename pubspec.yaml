@@ -55,6 +55,7 @@ dependencies:
   vibration: ^2.0.0
   flutter_simple_calculator: ^2.3.0
   image_picker: ^1.1.2
+  file_picker: ^8.1.2
 
 dev_dependencies:
   flutter_test:

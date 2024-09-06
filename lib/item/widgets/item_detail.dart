@@ -117,22 +117,25 @@ class _ItemDetailDialogState extends State<ItemDetailDialog> {
                 Center(
                   child: Stack(
                     children: [
-                      // Remplacer l'image commentée par une icône
                       Container(
                         width: 120,
                         height: 120,
                         color: Colors.grey[300],
-                        child: const Center(
-                          child: Icon(
-                            Icons
-                                .image, // Vous pouvez choisir une autre icône si nécessaire
-                            size:
-                                60, // Ajustez la taille de l'icône selon vos besoins
-                            color: Colors.grey, // Couleur de l'icône
-                          ),
+                        child: Center(
+                          child: item.imageUrl != null
+                              ? Image.network(
+                                  item.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  width: 120,
+                                  height: 120,
+                                )
+                              : Icon(
+                                  Icons.image,
+                                  size: 60,
+                                  color: Colors.grey,
+                                ),
                         ),
                       ),
-
                       if (item.discount != null && item.discount! > 0)
                         Positioned(
                           right: 4,

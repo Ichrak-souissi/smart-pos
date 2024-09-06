@@ -5,7 +5,6 @@ import 'package:pos/order-item/controllers/order-item_controller.dart';
 import 'package:pos/order-item/models/order-item.dart';
 import 'package:pos/order/controllers/order_controller.dart';
 import 'package:pos/order/models/order.dart';
-import 'package:pos/payement/views/calculator_widget.dart';
 import 'package:pos/payement/views/payement_dialog.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/order/views/order_widget.dart';
@@ -251,7 +250,7 @@ class _RoomViewState extends State<RoomView> {
                                       },
                                       child: CircularTable(
                                         capacity: table.capacity,
-                                        tableName: ' ${table.position}',
+                                        tableName: ' ${table.id}',
                                         borderColor: borderColor,
                                       ),
                                     );

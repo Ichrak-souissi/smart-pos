@@ -8,7 +8,7 @@ import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/room/controllers/room_controller.dart';
 import 'package:pos/room/widgets/tab_content.dart';
 import 'package:pos/item/models/item.dart';
-import 'package:pos/item/views/item_view.dart';
+import 'package:pos/item/widgets/item_view.dart';
 import 'package:pos/supplement/models/supplement.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
@@ -565,7 +565,7 @@ class _OrderWidgetState extends State<OrderWidget> {
                                                   width: 33,
                                                   height: 33,
                                                   decoration: BoxDecoration(
-                                                    color: Colors.red,
+                                                    color: Colors.yellow[600],
                                                     borderRadius:
                                                         BorderRadius.circular(
                                                             16.5),

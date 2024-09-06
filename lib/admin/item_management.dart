@@ -4,7 +4,7 @@ import 'package:pos/app_theme.dart';
 import 'package:pos/category/controllers/category_controller.dart';
 import 'package:pos/category/models/category.dart';
 import 'package:pos/item/models/item.dart';
-import 'package:pos/item/views/item_detail.dart';
+import 'package:pos/item/widgets/item_detail.dart';
 import 'package:pos/shared/widgets/appbar_widget.dart';
 import 'package:pos/table/controllers/table_controller.dart';
 
@@ -257,65 +257,64 @@ class _ItemManagementState extends State<ItemManagement> {
                   final isNew = isNewItem(item.createdAt);
 
                   return Dismissible(
-                    key: Key(item.id.toString()),
-                    direction: DismissDirection.endToStart,
-                    onDismissed: (direction) async {
-                      await categoryController.deleteItem(item.id);
-                      await categoryController
-                          .getItemsByCategoryId(category.id);
-                      setState(() {});
-                      Get.snackbar(
-                        'Succès',
-                        'L\'item ${item.name} a été supprimé avec succès.',
-                        snackPosition: SnackPosition.BOTTOM,
-                        duration: const Duration(seconds: 3),
-                      );
-                    },
-                    background: Container(
-                      color: Colors.red,
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: const Icon(Icons.delete, color: Colors.white),
-                    ),
-                    child: GestureDetector(
-                      onTap: () async {
-                        final updatedItem = await showDialog<Item>(
-                          context: context,
-                          builder: (BuildContext context) =>
-                              ItemDetailDialog(item: item),
+                      key: Key(item.id.toString()),
+                      direction: DismissDirection.endToStart,
+                      onDismissed: (direction) async {
+                        await categoryController.deleteItem(item.id);
+                        await categoryController
+                            .getItemsByCategoryId(category.id);
+                        setState(() {});
+                        Get.snackbar(
+                          'Succès',
+                          'L\'item ${item.name} a été supprimé avec succès.',
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 3),
                         );
-
-                        if (updatedItem != null) {
-                          int index = categoryController.categoryItems
-                              .indexWhere((i) => i.id == updatedItem.id);
-                          if (index != -1) {
-                            setState(() {
-                              categoryController.categoryItems[index] =
-                                  updatedItem;
-                            });
-                          }
-                        }
                       },
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.grey.shade200,
-                                width: 1,
+                      background: Container(
+                        color: Colors.red,
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final updatedItem = await showDialog<Item>(
+                            context: context,
+                            builder: (BuildContext context) =>
+                                ItemDetailDialog(item: item),
+                          );
+
+                          if (updatedItem != null) {
+                            int index = categoryController.categoryItems
+                                .indexWhere((i) => i.id == updatedItem.id);
+                            if (index != -1) {
+                              setState(() {
+                                categoryController.categoryItems[index] =
+                                    updatedItem;
+                              });
+                            }
+                          }
+                        },
+                        child: Stack(
+                          children: [
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.shade200,
+                                  width: 1,
+                                ),
+                                color: item.isActive
+                                    ? Colors.white
+                                    : Colors.grey.shade300,
                               ),
-                              color: item.isActive
-                                  ? Colors.white
-                                  : Colors.grey.shade300,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(5.0),
-                                    child: Container(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(5.0),
                                       child: Container(
                                         width: double.infinity,
                                         decoration: BoxDecoration(
@@ -335,128 +334,150 @@ class _ItemManagementState extends State<ItemManagement> {
                                       ),
                                     ),
                                   ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.all(5.0),
-                                  child: Text(
-                                    item.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 17,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Row(
-                                  children: [
-                                    const Padding(
-                                      padding:
-                                          EdgeInsets.only(left: 10, right: 5),
-                                      child: Icon(
-                                        Icons.whatshot_sharp,
-                                        color: Colors.orange,
-                                        size: 15,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${item.calories.toString()} calories',
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      item.name,
                                       style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 17,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                  ],
-                                ),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: item.discount != null &&
-                                              item.discount != 0
-                                          ? Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${item.price.toStringAsFixed(2)} dt',
-                                                  style: TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                    color: Colors.grey.shade500,
-                                                    decoration: TextDecoration
-                                                        .lineThrough,
+                                  ),
+                                  Row(
+                                    children: [
+                                      const Padding(
+                                        padding:
+                                            EdgeInsets.only(left: 10, right: 5),
+                                        child: Icon(
+                                          Icons.whatshot_sharp,
+                                          color: Colors.orange,
+                                          size: 15,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${item.calories.toString()} calories',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: item.discount != null &&
+                                                item.discount != 0
+                                            ? Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    '${item.price.toStringAsFixed(2)} dt',
+                                                    style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade500,
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                    ),
                                                   ),
-                                                ),
-                                                Text(
-                                                  '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                    color: Colors.red,
+                                                  Text(
+                                                    '${(item.price - (item.price * (item.discount?.toDouble() ?? 0) / 100)).toStringAsFixed(2)} dt',
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 14,
+                                                      color: Colors.red,
+                                                    ),
                                                   ),
+                                                ],
+                                              )
+                                            : Text(
+                                                '${item.price.toStringAsFixed(2)} dt',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade500,
                                                 ),
-                                              ],
-                                            )
-                                          : Text(
-                                              '${item.price.toStringAsFixed(2)} dt',
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 14,
-                                                color: Colors.grey.shade500,
                                               ),
-                                            ),
-                                    ),
-                                    Padding(
-                                      padding: const EdgeInsets.all(10),
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) =>
-                                                ItemDetailDialog(item: item),
-                                          ).then((_) {
-                                            setState(() {
-                                              categoryController.categoryItems;
+                                      ),
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            showDialog(
+                                              context: context,
+                                              builder: (BuildContext context) =>
+                                                  ItemDetailDialog(item: item),
+                                            ).then((_) {
+                                              setState(() {
+                                                categoryController
+                                                    .categoryItems;
+                                              });
                                             });
-                                          });
-                                        },
-                                        child: const Text(
-                                          'Modifier',
-                                          style: TextStyle(
-                                            color: Colors.blue,
-                                            fontSize: 16,
+                                          },
+                                          child: const Text(
+                                            'Modifier',
+                                            style: TextStyle(
+                                              color: Colors.blue,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          if (!item.isActive)
-                            Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(12),
-                                color: Colors.black.withOpacity(0.5),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'Non disponible',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    ],
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                ],
                               ),
                             ),
-                        ],
-                      ),
-                    ),
-                  );
+                            if (item.discount != null && item.discount! > 0)
+                              Positioned(
+                                right: 4,
+                                top: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.yellow,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    '${item.discount}%',
+                                    style: const TextStyle(
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            if (!item.isActive)
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  color: Colors.black.withOpacity(0.5),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Non disponible',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ));
                 } else {
                   return GestureDetector(
                     onTap: _showAddItemDialog,

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:pos/app_theme.dart';
 import 'package:pos/authentication/widgets/number_buttom.dart';
-import 'package:pos/authentication/widgets/shimmer.dart';
 import '../controllers/pin_controller.dart';
 import '../widgets/pin_code_field.dart';
 
@@ -16,7 +14,6 @@ class PinScreen extends StatefulWidget {
 class _PinScreenState extends State<PinScreen>
     with SingleTickerProviderStateMixin {
   String pin = "";
-  bool showShimmer = true;
   String selectedRole = "";
   bool isForgotPin = false;
 
@@ -38,9 +35,7 @@ class _PinScreenState extends State<PinScreen>
 
   Future loadData() async {
     await Future.delayed(const Duration(seconds: 2));
-    setState(() {
-      showShimmer = false;
-    });
+    setState(() {});
   }
 
   void _toggleForgotPin() {
@@ -83,9 +78,11 @@ class _PinScreenState extends State<PinScreen>
                   padding: const EdgeInsets.all(8.0),
                   child: Row(
                     children: [
-                      _buildRoleAvatar('Admin', 'assets/images/admin.png'),
+                      _buildRoleAvatar(
+                          'Administrateur', 'assets/images/admin.png'),
                       const SizedBox(width: 10),
-                      _buildRoleAvatar('Chef', 'assets/images/chef.png'),
+                      _buildRoleAvatar(
+                          'Chef de Cuisine', 'assets/images/chef.png'),
                       const SizedBox(width: 10),
                       _buildRoleAvatar('Serveur', 'assets/images/waiter.png'),
                     ],
@@ -108,9 +105,7 @@ class _PinScreenState extends State<PinScreen>
             child: Align(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: showShimmer
-                    ? ShimmerCodePin(child: _buildAnimatedContent(controller))
-                    : _buildAnimatedContent(controller),
+                child: _buildAnimatedContent(controller),
               ),
             ),
           ),
@@ -316,7 +311,7 @@ class _PinScreenState extends State<PinScreen>
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
-                  onTap: _toggleForgotPin,
+                  onTap: () {},
                   child: const Text(
                     "Code PIN oublié ?",
                     style: TextStyle(
@@ -325,17 +320,6 @@ class _PinScreenState extends State<PinScreen>
                     ),
                   ),
                 ),
-                if (selectedRole == 'Admin')
-                  const Padding(
-                    padding: EdgeInsets.only(top: 10.0),
-                    child: Text(
-                      "Vous n'avez pas de compte?",
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),

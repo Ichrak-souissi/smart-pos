@@ -53,11 +53,10 @@ class _OrdersViewWaiterState extends State<OrdersViewWaiter> {
 
   List<Order> _getFilteredOrders() {
     return orders.where((order) {
-      // Filtrer par `_selectedStatus`
-      if (_selectedStatus == 0) return true; // "Tout"
-      if (order.status != _selectedStatus) return false;
-      // Filtrer les commandes non payées
-      return !order.isPaid;
+      if (_selectedStatus == 0) {
+        return !order.isPaid;
+      }
+      return order.status == _selectedStatus && !order.isPaid;
     }).toList();
   }
 
@@ -128,7 +127,7 @@ class _OrdersViewWaiterState extends State<OrdersViewWaiter> {
                     crossAxisCount: 4,
                     mainAxisSpacing: 12.0,
                     crossAxisSpacing: 12.0,
-                    childAspectRatio: 0.5,
+                    childAspectRatio: 0.7,
                   ),
                   itemCount: filteredOrders.length,
                   itemBuilder: (context, index) {

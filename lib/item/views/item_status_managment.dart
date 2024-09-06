@@ -23,6 +23,9 @@ class _ItemStatusManagementState extends State<ItemStatusManagement> {
     super.initState();
     _loadItems();
     _loadCategories();
+
+    // Ajoutez l'écouteur pour le changement de texte
+    _searchController.addListener(_updateSearchResults);
   }
 
   Future<void> _loadItems() async {
@@ -75,6 +78,10 @@ class _ItemStatusManagementState extends State<ItemStatusManagement> {
     }
 
     return filteredItems;
+  }
+
+  void _updateSearchResults() {
+    setState(() {});
   }
 
   Widget _buildFilterButton(String label, String value) {
@@ -157,6 +164,13 @@ class _ItemStatusManagementState extends State<ItemStatusManagement> {
   }
 
   @override
+  void dispose() {
+    _searchController.removeListener(_updateSearchResults);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 250, 255, 245),
@@ -196,10 +210,11 @@ class _ItemStatusManagementState extends State<ItemStatusManagement> {
                     ),
                   );
                 }
-                if (_filterItems().isEmpty) {
+                final itemsToDisplay = _filterItems();
+                if (itemsToDisplay.isEmpty) {
                   return Center(
                     child: Text(
-                      'Aucun article disponible.',
+                      'Aucun plat disponible.',
                       style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                     ),
                   );
@@ -213,9 +228,9 @@ class _ItemStatusManagementState extends State<ItemStatusManagement> {
                       crossAxisSpacing: 10.0,
                       childAspectRatio: 0.75,
                     ),
-                    itemCount: _filterItems().length,
+                    itemCount: itemsToDisplay.length,
                     itemBuilder: (context, index) {
-                      final item = _filterItems()[index];
+                      final item = itemsToDisplay[index];
                       return Card(
                         color: Colors.white,
                         margin: EdgeInsets.all(8.0),

@@ -434,7 +434,7 @@ class _TabContentState extends State<TabContent> {
                     gradient: LinearGradient(
                       colors: [
                         Color.fromARGB(255, 170, 174, 171),
-                        AppTheme.lightTheme.primaryColor
+                        const Color.fromARGB(255, 225, 223, 223),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -532,8 +532,7 @@ class _TabContentState extends State<TabContent> {
                           style: ElevatedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 24, vertical: 12),
-                            backgroundColor:
-                                const Color.fromARGB(255, 91, 128, 93),
+                            backgroundColor: AppTheme.lightTheme.primaryColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),

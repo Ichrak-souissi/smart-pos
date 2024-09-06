@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class PinCodeField extends StatelessWidget {
+class PinCodeField extends StatefulWidget {
   final String pin;
   final int pinCodeFieldIndex;
   final PinThemeData theme;
@@ -15,24 +15,84 @@ class PinCodeField extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  _PinCodeFieldState createState() => _PinCodeFieldState();
+}
+
+class _PinCodeFieldState extends State<PinCodeField> {
+  bool _obscureText = true;
+
+  @override
   Widget build(BuildContext context) {
-    final isActive = pin.length > pinCodeFieldIndex;
-    final textColor = theme.textColor;
+    final isActive = widget.pin.length > widget.pinCodeFieldIndex;
+    final textColor = widget.theme.textColor;
+    final displayText =
+        isActive && !_obscureText ? widget.pin[widget.pinCodeFieldIndex] : '*';
 
     return Container(
-      width: theme.size,
-      height: theme.size,
-      margin: EdgeInsets.symmetric(horizontal: theme.margin),
+      width: widget.theme.size,
+      height: widget.theme.size,
+      margin: EdgeInsets.symmetric(horizontal: widget.theme.margin),
       child: Center(
         child: Text(
-          isActive ? '*' : '_',
+          isActive ? displayText : '_',
           style: TextStyle(
-            fontSize: theme.fontSize,
+            fontSize: widget.theme.fontSize,
             color: textColor,
-            fontWeight: theme.fontWeight,
+            fontWeight: widget.theme.fontWeight,
           ),
         ),
       ),
+    );
+  }
+}
+
+class PinCodeInput extends StatefulWidget {
+  final String pin;
+  final int numberOfFields;
+  final PinThemeData theme;
+  final ValueChanged<String> onChanged;
+
+  const PinCodeInput({
+    required Key key,
+    required this.pin,
+    required this.numberOfFields,
+    required this.onChanged,
+    this.theme = const PinThemeData(),
+  }) : super(key: key);
+
+  @override
+  _PinCodeInputState createState() => _PinCodeInputState();
+}
+
+class _PinCodeInputState extends State<PinCodeInput> {
+  bool _obscureText = true;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        ...List.generate(
+          widget.numberOfFields,
+          (index) => PinCodeField(
+            key: UniqueKey(),
+            pin: widget.pin,
+            pinCodeFieldIndex: index,
+            onChanged: widget.onChanged,
+            theme: widget.theme,
+          ),
+        ),
+        IconButton(
+          icon: Icon(
+            _obscureText ? Icons.visibility_off : Icons.visibility,
+            color: widget.theme.textColor,
+          ),
+          onPressed: () {
+            setState(() {
+              _obscureText = !_obscureText;
+            });
+          },
+        ),
+      ],
     );
   }
 }
